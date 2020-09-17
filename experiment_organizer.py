@@ -89,7 +89,7 @@ def experiment_line(arg_parse: dict, id):
 
     ret.append("--id")
     ret.append(str(id))
-    ret.append("--s")
+    ret.append("-s")
     return ret
 
 
