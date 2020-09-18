@@ -5,6 +5,7 @@ from core.lampo import Lampo
 import numpy as np
 from core.model import RLModel
 from core.config import config
+import json
 
 
 def get_arguments_dict():
@@ -30,6 +31,9 @@ def get_arguments_dict():
                         action="store_true")
     parser.add_argument("-s", "--save",
                         help="Save the results in the experiment directory.",
+                        action="store_true")
+    parser.add_argument("-d", "--load",
+                        help="Load configuration from folder.",
                         action="store_true")
     parser.add_argument("-c", "--context_kl_bound",
                         help="Bound the context kl.",
@@ -58,8 +62,10 @@ def get_arguments_dict():
 
 if __name__ == "__main__":
     args = get_arguments_dict()
-
     experiment_path = "experiments/%s/" % args.folder_name
+    if args.load:
+        with open(experiment_path + "configuration.json") as f:
+            args = json.load(f)
     n_clusters = config[args.task_name]["n_cluster"]
 
     rl_ppca = PPCAImitation(config[args.task_name]["task_class"],
