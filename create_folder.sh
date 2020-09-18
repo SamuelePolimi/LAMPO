@@ -24,7 +24,7 @@ echo "Starting Job $SLURM_JOB_ID, Index $SLURM_ARRAY_TASK_ID"
 # Activate virtual environment
 source activate rl
 
-python experiment_organizer.py $@
+python experiment_organizer.py $@ --load --save --slurm
 
 deactivate
 

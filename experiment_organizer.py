@@ -37,6 +37,9 @@ def get_arguments_dict():
     parser.add_argument("-p", "--plot",
                         help="Show real time plots.",
                         action="store_true")
+    parser.add_argument("-r", "--slurm",
+                        help="Don't look for CPU usage.",
+                        action="store_true")
     parser.add_argument("-z", "--normalize",
                         help="Self-Normalize Importance Sampling.",
                         action="store_true")

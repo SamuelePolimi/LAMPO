@@ -32,11 +32,13 @@ def wait_resources():
         if cpu < 50.:
             break
 
+
 class Lampo:
 
-    def __init__(self, rlmodel: RLModel):
+    def __init__(self, rlmodel: RLModel, wait=True):
 
         self.rlmodel = rlmodel
+        self._wait = wait
 
     def add_dataset(self, w, z, k, c, r):
         self.rlmodel.add_dataset(w, z, k, c, r)
@@ -54,7 +56,9 @@ class Lampo:
                      'fun': self.rlmodel.get_h,
                      'jac': self.rlmodel.get_h_grad}
 
-        wait_resources()
+        if self._wait:
+            wait_resources()
+
         xL = optimize.minimize(self.rlmodel.get_f, self.rlmodel._get_x(), constraints=[ineq_cons_1, ineq_cons_2],
                                method='SLSQP', jac=self.rlmodel.get_f_grad, options={'ftol': 1e-9, 'disp': True})
         self.rlmodel._set_x(xL.x)

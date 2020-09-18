@@ -35,6 +35,9 @@ def get_arguments_dict():
     parser.add_argument("-d", "--load",
                         help="Load configuration from folder.",
                         action="store_true")
+    parser.add_argument("-r", "--slurm",
+                        help="Don't look for CPU usage.",
+                        action="store_true")
     parser.add_argument("-c", "--context_kl_bound",
                         help="Bound the context kl.",
                         type=float,
@@ -60,12 +63,18 @@ def get_arguments_dict():
     return args
 
 
+class Objectview(object):
+
+    def __init__(self, d):
+        self.__dict__ = d
+
 if __name__ == "__main__":
     args = get_arguments_dict()
     experiment_path = "experiments/%s/" % args.folder_name
     if args.load:
         with open(experiment_path + "configuration.json") as f:
-            args = json.load(f)
+            args = Objectview(json.load(f))
+
     n_clusters = config[args.task_name]["n_cluster"]
 
     rl_ppca = PPCAImitation(config[args.task_name]["task_class"],
@@ -94,7 +103,7 @@ if __name__ == "__main__":
 
     myplot = LampoMonitor(kl_bound, "class_log kl=%.2f, %d samples, kl_type=%s, normalize=%s" %
                           (kl_bound, n_batch, kl_type, normalize))
-    sr = Lampo(rl_ppca.rlmppca)
+    sr = Lampo(rl_ppca.rlmppca, wait=not args.slurm)
 
     for i in range(args.max_iter):
 
