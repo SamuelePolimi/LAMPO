@@ -82,7 +82,7 @@ class ImitationLearning:
 
 class PPCAImitation:
 
-    def __init__(self, task_class, state_dim, n_features, n_cluster, n_latent, headless=False, cov_reg=1E-8, n_samples=50):
+    def __init__(self, task_class, state_dim, n_features, n_cluster, n_latent, parameters=None, headless=False, cov_reg=1E-8, n_samples=50):
 
 
         obs_config = ObservationConfig()
@@ -101,11 +101,12 @@ class PPCAImitation:
         self.env.launch()
 
         self.task = self.env.get_task(task_class)
-        parameters = np.load("parameters/%s_%d.npy" % (self.task.get_name(), n_features))[:n_samples]
+        if parameters is None:
+            self.parameters = np.load("parameters/%s_%d.npy" % (self.task.get_name(), n_features))[:n_samples]
         # parameters = np.concatenate([parameters for _ in range(20)])
         # parameters[:, :3] += 0.03 * np.random.normal(size=parameters[:, :3].shape)
         self.mppca = MPPCA(n_cluster, n_latent, n_iterations=30, cov_reg=cov_reg)
-        self.mppca.fit(parameters)
+        self.mppca.fit(self.parameters)
 
         self.rlmppca = None
 

@@ -111,9 +111,9 @@ if __name__ == "__main__":
         with open(experiment_path + 'configuration.json', 'w') as fp:
             json.dump(args_dict, fp, indent=4, sort_keys=True)
 
-        tp = ThreadPool(10)
-        for idx in range(args_dict["n_runs"]):
-            tp.apply_async(work, (args_dict, idx))
-
-        tp.close()
-        tp.join()
+        # tp = ThreadPool(10)
+        # for idx in range(args_dict["n_runs"]):
+        #     tp.apply_async(work, (args_dict, idx))
+        #
+        # tp.close()
+        # tp.join()
