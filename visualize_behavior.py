@@ -1,7 +1,5 @@
 import argparse
-from imitation_learning import PPCAImitation, RunModel
-from core.plot import LampoMonitor
-from core.lampo import Lampo
+from core.imitation_learning import RunModel
 import numpy as np
 from core.model import RLModel
 from core.config import config

@@ -3,8 +3,8 @@ from rlbench.action_modes import ArmActionMode, ActionMode
 from rlbench.observation_config import ObservationConfig
 
 import numpy as np
-from dariaspy.trajectory import NamedTrajectory
-from dariaspy.movement_primitives import MovementPrimitive, Group, ClassicSpace, \
+from romi.trajectory import NamedTrajectory
+from romi.movement_primitives import MovementPrimitive, Group, ClassicSpace, \
     LearnTrajectory
 from mppca.multiprocess import MultiProcess
 
@@ -12,6 +12,8 @@ from pyrep.backend import sim
 
 from mppca.mixture_ppca import MPPCA
 from core.model import RLModel
+
+import matplotlib.pyplot as plt
 
 
 class ImitationLearning:
@@ -73,7 +75,12 @@ class ImitationLearning:
             lengths.append(t/200.)
             trajectories.append(trajectory)
 
-        space = ClassicSpace(group, n_features=n_features, regularization=1E-12)
+        space = ClassicSpace(group, n_features=n_features, regularization=1E-15)
+        z = np.linspace(-0.2, 1.2, 1000)
+        Phi = space.get_phi(z)
+        for i in range(n_features):
+            plt.plot(z, Phi[:, i])
+        plt.show()
         parameters = np.array([np.concatenate([s, np.array([l]), LearnTrajectory(space, traj).get_block_params()])
                                for s, l, traj in zip(states, lengths, trajectories)])
         np.save("parameters/%s_%d.npy" % (task.get_name(), n_features), parameters)
@@ -104,7 +111,7 @@ class PPCAImitation:
         if parameters is None:
             self.parameters = np.load("parameters/%s_%d.npy" % (self.task.get_name(), n_features))[:n_samples]
         # parameters = np.concatenate([parameters for _ in range(20)])
-        # parameters[:, :3] += 0.03 * np.random.normal(size=parameters[:, :3].shape)
+        # self.parameters[:, :3] += 0.03 * np.random.normal(size=self.parameters[:, :3].shape)
         self.mppca = MPPCA(n_cluster, n_latent, n_iterations=30, cov_reg=cov_reg)
         self.mppca.fit(self.parameters)
 
@@ -114,6 +121,19 @@ class PPCAImitation:
 
         group = Group("rlbench", ["d%d" % i for i in range(7)] + ["gripper"])
         self.space = ClassicSpace(group, n_features=n_features)
+
+        print("mpcca learned")
+
+    def stop(self, joint_gripper, previous_reward):
+        if previous_reward == 0.:
+            success = 0.
+            for _ in range(50):
+                obs, reward, terminate = self.task.step(joint_gripper)
+                if reward == 1.0:
+                    success = 1.
+                    break
+            return self.task._task.get_dense_reward(), success
+        return self.task._task.get_dense_reward(), 1.
 
     def collect_samples(self, n_episodes=50, noise=True, isomorphic_noise=False):
 
@@ -127,38 +147,28 @@ class PPCAImitation:
         for i in range(n_episodes):
             context = ob[1].task_low_dim_state
             observations.append(context)
-
             w, z, k = self.rlmppca.generate_full(np.expand_dims(context, 0), noise=noise, isomorphic_noise=isomorphic_noise)
+            # w = self.parameters[i, 3:]
             parameters.append(w)
             latent.append(z)
             cluster.append(k)
             mp = MovementPrimitive(self.space, MovementPrimitive.get_params_from_block(self.space, w[1:]))
+            duration = 1 if w[0] < 0  else w[0]
             if self._headless:
-                trajectory = mp.get_full_trajectory(duration=w[0], frequency=200)
+                trajectory = mp.get_full_trajectory(duration=duration, frequency=200)
             else:
-                trajectory = mp.get_full_trajectory(duration=max(5*w[0], 0.1), frequency=200)
+                trajectory = mp.get_full_trajectory(duration=5*duration, frequency=200)
             tot_reward = 0.
             success = 0
             for a1 in trajectory.values:  # , a2 in zip(trajectory.values[:-1, :], trajectory.values[1:, :]):
                 joint = a1  # (a2-a1)*20.
                 joint_gripper = joint
                 obs, reward, terminate = self.task.step(joint_gripper)
-                tot_reward += reward
-                state, points = sim.simCheckProximitySensor(self.task._task._initial_objs_in_scene[5][0]._handle,
-                                                        self.task._robot.arm.get_tip().get_handle())
-                points_1 = sim.simGetObjectPosition(self.task._task._initial_objs_in_scene[5][0]._handle,
-                                                    self.task._robot.arm.get_tip().get_handle())
-
-                tot_reward = - np.sqrt(points_1[0] ** 2 + points_1[1] ** 2 + points_1[2] ** 2)
-                if state == 1 and terminate:
-                    tot_reward = 1.
-                    success = 1
+                if reward==1. or terminate==1.:
+                    if reward==1.:
+                        success = 1.
                     break
-                elif state == 1 and not terminate or state != 1 and terminate:
-                    raise("There is something wrong")
-                else:
-                    pass
-
+            tot_reward, success = self.stop(joint_gripper, success)
             # tot_reward =  -np.mean(np.abs(context - ob[1].gripper_pose[:3]))
             # tot_reward = -(w[0]-0.2)**2
             print(tot_reward)
@@ -239,21 +249,25 @@ class RunModel:
                 joint_gripper = joint
                 obs, reward, terminate = self.task.step(joint_gripper)
                 tot_reward += reward
-                state, points = sim.simCheckProximitySensor(self.task._task._initial_objs_in_scene[5][0]._handle,
-                                                        self.task._robot.arm.get_tip().get_handle())
-                points_1 = sim.simGetObjectPosition(self.task._task._initial_objs_in_scene[5][0]._handle,
-                                                    self.task._robot.arm.get_tip().get_handle())
-
-                tot_reward = - np.sqrt(points_1[0] ** 2 + points_1[1] ** 2 + points_1[2] ** 2)
-                if state == 1 and terminate:
-                    tot_reward = 1.
-                    success = 1
-                    break
-                elif state == 1 and not terminate or state != 1 and terminate:
-                    raise("There is something wrong")
-                else:
-                    pass
-
+                # state, points = sim.simCheckProximitySensor(self.task._task._initial_objs_in_scene[5][0]._handle,
+                #                                         self.task._robot.arm.get_tip().get_handle())
+                # points_1 = sim.simGetObjectPosition(self.task._task._initial_objs_in_scene[5][0]._handle,
+                #                                     self.task._robot.arm.get_tip().get_handle())
+                #
+                # tot_reward = - np.sqrt(points_1[0] ** 2 + points_1[1] ** 2 + points_1[2] ** 2)
+                # if state == 1 and terminate:
+                #     tot_reward = 1.
+                #     success = 1
+                #     break
+                # elif state == 1 and not terminate or state != 1 and terminate:
+                #     raise("There is something wrong")
+                # else:
+                #     pass
+                if terminate:
+                    for _ in range(20):
+                        obs, reward, terminate = self.task.step(joint_gripper)
+                        if reward==1.0:
+                            tot_reward=1.
             # tot_reward =  -np.mean(np.abs(context - ob[1].gripper_pose[:3]))
             # tot_reward = -(w[0]-0.2)**2
             print(tot_reward)
