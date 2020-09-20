@@ -1,5 +1,5 @@
-from rlbench.tasks import ReachTarget, WaterPlants, CloseDrawer
-
+from rlbench.tasks import ReachTarget as RT, WaterPlants, CloseDrawer
+from core.augmented_tasks.tasks import ReachTarget
 
 config = {
     "close_drawer": {
@@ -24,6 +24,6 @@ config = {
         "latent_dim": 3,
         "n_features": 20,
         "state_dim": 3,
-        "n_samples": 200
+        "n_samples": 1000
     }
 }

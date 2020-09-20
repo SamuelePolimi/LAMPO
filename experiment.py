@@ -1,11 +1,13 @@
 import argparse
-from imitation_learning import PPCAImitation
+from core.imitation_learning import PPCAImitation
 from core.plot import LampoMonitor
 from core.lampo import Lampo
 import numpy as np
 from core.model import RLModel
 from core.config import config
 import json
+
+import matplotlib.pyplot as plt
 
 
 def get_arguments_dict():
@@ -38,6 +40,12 @@ def get_arguments_dict():
     parser.add_argument("-r", "--slurm",
                         help="Don't look for CPU usage.",
                         action="store_true")
+    parser.add_argument("--il_noise",
+                        help="Add noise on the context",
+                        action="store_true")
+    parser.add_argument("--dense_reward",
+                        help="Use dense reward",
+                        action="store_true")
     parser.add_argument("-c", "--context_kl_bound",
                         help="Bound the context kl.",
                         type=float,
@@ -67,6 +75,7 @@ class Objectview(object):
 
     def __init__(self, d):
         self.__dict__ = d
+
 
 if __name__ == "__main__":
     args = get_arguments_dict()
@@ -101,7 +110,8 @@ if __name__ == "__main__":
                               kl_bound_stab=kl_context_bound, normalize=normalize,
                               kl_type=kl_type)
 
-    myplot = LampoMonitor(kl_bound, "class_log kl=%.2f, %d samples, kl_type=%s, normalize=%s" %
+    myplot = LampoMonitor(kl_bound, kl_context_bound=kl_context_bound,
+                          title="class_log kl=%.2f, %d samples, kl_type=%s, normalize=%s" %
                           (kl_bound, n_batch, kl_type, normalize))
     sr = Lampo(rl_ppca.rlmppca, wait=not args.slurm)
 
@@ -111,6 +121,7 @@ if __name__ == "__main__":
         sr.add_dataset(actions[:n_batch], latent[:n_batch], cluster[:n_batch], observation[:n_batch], r[:n_batch])
         print("ITERATION", i)
         print("SUCCESS:", np.mean(s))
+
         myplot.notify_outer_loop(np.mean(s), np.mean(r))
 
         sr.improve()
