@@ -56,10 +56,14 @@ class Lampo:
                      'fun': self.rlmodel.get_h,
                      'jac': self.rlmodel.get_h_grad}
 
+        constraints = [ineq_cons_1, ineq_cons_2]
+        if self.rlmodel._kl_bound_context < 0:
+            constraints = [ineq_cons_1]
+
         if self._wait:
             wait_resources()
 
-        xL = optimize.minimize(self.rlmodel.get_f, self.rlmodel._get_x(), constraints=[ineq_cons_1, ineq_cons_2],
+        xL = optimize.minimize(self.rlmodel.get_f, self.rlmodel._get_x(), constraints=constraints,
                                method='SLSQP', jac=self.rlmodel.get_f_grad, options={'ftol': 1e-9, 'disp': True})
         self.rlmodel._set_x(xL.x)
         # print(xL)
@@ -67,7 +71,7 @@ class Lampo:
         print("mu", np.exp(self.rlmodel._last_mu))
         print("pi", np.exp(self.rlmodel._last_log_pi))
         print("Sigma", self.rlmodel._last_Sigma)
-        print("context_kl", self.rlmodel.context_kl)
+        print("context_kl", self.rlmodel.current_context_kl)
 
     def test_f_grad(self, x, delta=1E-5):
         f = self.rlmodel.get_f(x)

@@ -89,7 +89,8 @@ class ImitationLearning:
 
 class PPCAImitation:
 
-    def __init__(self, task_class, state_dim, n_features, n_cluster, n_latent, parameters=None, headless=False, cov_reg=1E-8, n_samples=50):
+    def __init__(self, task_class, state_dim, n_features, n_cluster, n_latent, parameters=None, headless=False,
+                 cov_reg=1E-8, n_samples=50, dense_reward=False, imitation_noise=0.03):
 
 
         obs_config = ObservationConfig()
@@ -111,11 +112,13 @@ class PPCAImitation:
         if parameters is None:
             self.parameters = np.load("parameters/%s_%d.npy" % (self.task.get_name(), n_features))[:n_samples]
         # parameters = np.concatenate([parameters for _ in range(20)])
-        # self.parameters[:, :3] += 0.03 * np.random.normal(size=self.parameters[:, :3].shape)
+        self.imitation_noise = imitation_noise
+        self.parameters[:, :3] += imitation_noise * np.random.normal(size=self.parameters[:, :3].shape)
         self.mppca = MPPCA(n_cluster, n_latent, n_iterations=30, cov_reg=cov_reg)
         self.mppca.fit(self.parameters)
 
         self.rlmppca = None
+        self.dense_reward = dense_reward
 
         print(np.exp(self.mppca.log_pi))
 
@@ -175,7 +178,12 @@ class PPCAImitation:
             # print("my reward", -np.mean(np.abs(context - ob[1].gripper_pose[:3])))
             # print("parameters", parameters[-1])
             success_list.append(success)
-            reward_list.append(tot_reward)
+
+            if self.dense_reward:
+                reward_list.append(tot_reward)
+            else:
+                reward_list.append(success)
+
             ob = self.task.reset()
 
         print("-"*50)

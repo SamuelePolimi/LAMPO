@@ -49,7 +49,7 @@ class RLModel(DictSerializable):
     torch_vars = ["log_base_pi", "mu", "_base_diag_Sigma"]
     lists = ["_rho_den", "_parameter_list"]
 
-    def __init__(self, mppca: MPPCA, context_dim, normalize=True, kl_type="forward", kl_bound=0.5, kl_bound_stab=1., kl_reg=0.01):
+    def __init__(self, mppca: MPPCA, context_dim, normalize=True, kl_type="forward", kl_bound=0.5, kl_bound_context=1., kl_reg=0.01):
 
         torch.set_default_tensor_type('torch.DoubleTensor')
 
@@ -111,10 +111,10 @@ class RLModel(DictSerializable):
             self.avg_entropy = 0.
 
             self._kl_bound = kl_bound
-            self._kl_bound_stab = kl_bound_stab
+            self._kl_bound_context = kl_bound_context
             self._kl_reg = kl_reg
 
-            self.context_kl = 0.
+            self.current_context_kl = 0.
             # self._optimizer = torch.optim.Adam(params=[self.log_base_pi, self.mu, self._base_diag_Sigma], lr=1E-2)
             self.preprocess()
 
@@ -689,7 +689,7 @@ class RLModel(DictSerializable):
         self._set_x(x)
         self.x_h = self._inner_x.copy()
         self._h_grad, self._h = self.get_context_kl()
-        return -self._h + self._kl_bound_stab
+        return -self._h + self._kl_bound_context
 
     def get_h_grad(self, x):
         # if self._x_g is not None:

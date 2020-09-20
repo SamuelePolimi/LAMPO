@@ -1,0 +1,20 @@
+{
+    "batch_size": 500,
+    "context_kl_bound": 50.0,
+    "date": "09/20/2020, 17:50:43",
+    "dense_reward": true,
+    "folder_name": "noise_dense",
+    "forward": false,
+    "il_noise": 0.03,
+    "imitation_learning": 1000,
+    "kl_bound": 0.2,
+    "load": false,
+    "max_iter": 5,
+    "n_evaluations": 500,
+    "n_runs": 5,
+    "normalize": true,
+    "plot": false,
+    "save": false,
+    "slurm": false,
+    "task_name": "reach_target"
+}

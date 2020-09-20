@@ -42,7 +42,8 @@ def get_arguments_dict():
                         action="store_true")
     parser.add_argument("--il_noise",
                         help="Add noise on the context",
-                        action="store_true")
+                        type=float,
+                        default=0.03)
     parser.add_argument("--dense_reward",
                         help="Use dense reward",
                         action="store_true")
@@ -93,7 +94,9 @@ if __name__ == "__main__":
                             config[args.task_name]["latent_dim"],
                             headless=True,
                             n_samples=args.imitation_learning,
-                            cov_reg=1E-8)
+                            cov_reg=1E-8,
+                            dense_reward=args.dense_reward,
+                            imitation_noise=args.il_noise)
 
     n_evaluation_samples = args.n_evaluations
     n_batch = args.batch_size
@@ -107,7 +110,7 @@ if __name__ == "__main__":
 
     normalize = args.normalize
     rl_ppca.rlmppca = RLModel(rl_ppca.mppca, context_dim=config[args.task_name]["state_dim"], kl_bound=kl_bound,
-                              kl_bound_stab=kl_context_bound, normalize=normalize,
+                              kl_bound_context=kl_context_bound, normalize=normalize,
                               kl_type=kl_type)
 
     myplot = LampoMonitor(kl_bound, kl_context_bound=kl_context_bound,
@@ -127,7 +130,8 @@ if __name__ == "__main__":
         sr.improve()
         print("Optimization %f" % sr.rlmodel._f)
         print("KL %f <= %f" % (sr.rlmodel._g, kl_bound))
-        print("KL context %f <= %f" % (sr.rlmodel._h, kl_context_bound))
+        if kl_context_bound> 0:
+            print("KL context %f <= %f" % (sr.rlmodel._h, kl_context_bound))
         myplot.notify_inner_loop(sr.rlmodel._f, sr.rlmodel._g, sr.rlmodel.avg_entropy, sr.rlmodel._h)
 
         if args.plot:

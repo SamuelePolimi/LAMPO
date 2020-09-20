@@ -1,0 +1,15 @@
+{
+    "batch_size": 10,
+    "context_kl_bound": 500.0,
+    "date": "09/17/2020, 02:17:53",
+    "folder_name": "experiment3",
+    "forward": true,
+    "imitation_learning": 200,
+    "kl_bound": 0.2,
+    "max_iter": 20,
+    "n_evaluations": 500,
+    "n_runs": 10,
+    "normalize": false,
+    "plot": false,
+    "task_name": "reach_target"
+}

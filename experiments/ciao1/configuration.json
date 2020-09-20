@@ -1,0 +1,12 @@
+{
+    "batch_size": 10,
+    "context_kl_bound": 50.0,
+    "date": "09/16/2020, 17:37:22",
+    "folder_name": "ciao1",
+    "imitation_learning": 200,
+    "kl_bound": 0.2,
+    "n_runs": 2,
+    "normalize": false,
+    "plot": false,
+    "task_name": "reach_target"
+}

@@ -44,7 +44,7 @@ def get_arguments_dict():
                         help="Load configuration from folder.",
                         action="store_true")
     parser.add_argument("-r", "--slurm",
-                        help="Don't look for CPU usage.",
+                        help="Don't look for CPU usage & immediately run experiments.",
                         action="store_true")
     parser.add_argument("-z", "--normalize",
                         help="Self-Normalize Importance Sampling.",
@@ -68,6 +68,14 @@ def get_arguments_dict():
                         help="Number of the evaluation batch.",
                         type=int,
                         default=500)
+    parser.add_argument("--il_noise",
+                        help="Add noise on the context",
+                        type=float,
+                        default=0.03)
+    parser.add_argument("--dense_reward",
+                        help="Use dense reward",
+                        action="store_true")
+
 
     args = parser.parse_args()
 
@@ -81,8 +89,8 @@ def work(arg_parse, id):
 
 def experiment_line(arg_parse: dict, id):
     positional = ["folder_name"]
-    booleans = ["plot", "normalize", "forward"]
-    exclude = ["n_runs", "date"]
+    booleans = ["plot", "normalize", "forward", "load", "dense_reward", "slurm"]
+    exclude = ["n_runs", "date", "save"]
     ret = []
     for p in positional:
         ret.append(arg_parse[p])
@@ -120,9 +128,11 @@ if __name__ == "__main__":
         with open(experiment_path + 'configuration.json', 'w') as fp:
             json.dump(args_dict, fp, indent=4, sort_keys=True)
 
-        # tp = ThreadPool(10)
-        # for idx in range(args_dict["n_runs"]):
-        #     tp.apply_async(work, (args_dict, idx))
-        #
-        # tp.close()
-        # tp.join()
+        if not args_dict["slurm"]:
+
+            tp = ThreadPool(5)
+            for idx in range(args_dict["n_runs"]):
+                tp.apply_async(work, (args_dict, idx))
+
+            tp.close()
+            tp.join()
