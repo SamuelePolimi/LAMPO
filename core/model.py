@@ -531,7 +531,8 @@ class RLModel(DictSerializable):
         else:
             w = torch.exp(rho_num - rho_den) / self._k.shape[0]
 
-        ret = torch.sum(self._r*w)
+        # todo: let's see how does it works
+        ret = torch.sum(self._r*w) - 1E-4 * self.get_context_kl_tensor()
         ret = self._get_gradient_from_torch(ret), ret.detach().numpy()
 
         return ret
@@ -541,12 +542,7 @@ class RLModel(DictSerializable):
         self.mu.grad.zero_()
         self.log_base_pi.grad.zero_()
 
-    def get_context_kl(self):
-        """
-        Add the forward KL entropy bound
-        :param c: vector of context (n_samples x context_dim)
-        :return:
-        """
+    def get_context_kl_tensor(self):
         log_pi_reg = self.get_log_pi(self.log_base_pi)
         mu_reg = self.mu
         sigma_reg = self.get_Sigma(self._base_diag_Sigma)
@@ -556,6 +552,16 @@ class RLModel(DictSerializable):
         kl, _ = self._get_kl(mu_b, torch.inverse(sigma_b), log_pi_b, mu_a, torch.inverse(sigma_a), log_pi_a)
 
         kl_mean = torch.mean(kl)
+        return kl_mean
+
+    def get_context_kl(self):
+        """
+        Add the forward KL entropy bound
+        :param c: vector of context (n_samples x context_dim)
+        :return:
+        """
+
+        kl_mean = torch.mean(self.get_context_kl_tensor())
         return self._get_gradient_from_torch(kl_mean), kl_mean.detach().numpy()
 
     def get_kl_stabilization(self):

@@ -10,8 +10,9 @@ TODO:
 - [x] Extraction of dense reward
 - [x] More structured and clean version of the code
 - [x] Parallel experiments
-- [ ] Inheritance to define dense reward
-- [ ] Setting up experiments with the cluster (ask Joao)
+- [x] Inheritance to define dense reward
+- [x] General interface working also with TCP/IP connection
+- [x] Setting up experiments with the cluster (ask Joao)
 - [ ] Colome and Torras Baseline
 - [ ] Better analysis, tests and comments
 
