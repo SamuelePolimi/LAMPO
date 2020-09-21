@@ -1,5 +1,7 @@
 import argparse
-from core.imitation_learning import PPCAImitation
+from core.imitation_learning import PPCAImitation, RunModel
+from mppca.mixture_ppca import MPPCA
+from core.task_interface import TaskInterface
 from core.plot import LampoMonitor
 from core.lampo import Lampo
 import numpy as np
@@ -27,6 +29,9 @@ def get_arguments_dict():
                         type=int, default=200)
     parser.add_argument("-p", "--plot",
                         help="Show real time plots.",
+                        action="store_true")
+    parser.add_argument("-v", "--visualize_robot",
+                        help="Show robotic behavior",
                         action="store_true")
     parser.add_argument("-z", "--normalize",
                         help="Normalized Importance Sampling",
@@ -78,6 +83,13 @@ class Objectview(object):
         self.__dict__ = d
 
 
+def process_parameters(parameters, n_samples, n_context, noise=0.03):
+    parameters = parameters[:n_samples].copy()
+    parameters[:, :n_context] += noise * np.random.normal(size=parameters[:, :n_context].shape)
+    return parameters
+
+
+
 if __name__ == "__main__":
     args = get_arguments_dict()
     experiment_path = "experiments/%s/" % args.folder_name
@@ -87,16 +99,16 @@ if __name__ == "__main__":
 
     n_clusters = config[args.task_name]["n_cluster"]
 
-    rl_ppca = PPCAImitation(config[args.task_name]["task_class"],
-                            config[args.task_name]["state_dim"],
-                            config[args.task_name]["n_features"],
-                            n_clusters,
-                            config[args.task_name]["latent_dim"],
-                            headless=True,
-                            n_samples=args.imitation_learning,
-                            cov_reg=1E-8,
-                            dense_reward=args.dense_reward,
-                            imitation_noise=args.il_noise)
+    task = config[args.task_name]["task_box"](not args.visualize_robot)     # type: TaskInterface
+
+    state_dim = task.get_context_dim()
+
+
+    parameters = task.get_demonstrations()
+    parameters = process_parameters(parameters, args.imitation_learning, state_dim, args.il_noise)
+
+    mppca = MPPCA(n_clusters, config[args.task_name]["latent_dim"], n_init=500)
+    mppca.fit(parameters)
 
     n_evaluation_samples = args.n_evaluations
     n_batch = args.batch_size
@@ -109,18 +121,22 @@ if __name__ == "__main__":
         kl_type = "reverse"  # "reverse"
 
     normalize = args.normalize
-    rl_ppca.rlmppca = RLModel(rl_ppca.mppca, context_dim=config[args.task_name]["state_dim"], kl_bound=kl_bound,
+
+    rl_model = RLModel(mppca, context_dim=config[args.task_name]["state_dim"], kl_bound=kl_bound,
                               kl_bound_context=kl_context_bound, normalize=normalize,
                               kl_type=kl_type)
 
     myplot = LampoMonitor(kl_bound, kl_context_bound=kl_context_bound,
                           title="class_log kl=%.2f, %d samples, kl_type=%s, normalize=%s" %
                           (kl_bound, n_batch, kl_type, normalize))
-    sr = Lampo(rl_ppca.rlmppca, wait=not args.slurm)
 
+    sr = Lampo(rl_model, wait=not args.slurm)
+
+    # TODO: start to modify here
+    collector = RunModel(task, rl_model, args.dense_reward)
     for i in range(args.max_iter):
 
-        s, r, actions, latent, cluster, observation = rl_ppca.collect_samples(n_evaluation_samples, isomorphic_noise=False)
+        s, r, actions, latent, cluster, observation = collector.collect_samples(n_evaluation_samples, isomorphic_noise=False)
         sr.add_dataset(actions[:n_batch], latent[:n_batch], cluster[:n_batch], observation[:n_batch], r[:n_batch])
         print("ITERATION", i)
         print("SUCCESS:", np.mean(s))
@@ -137,7 +153,7 @@ if __name__ == "__main__":
         if args.plot:
             myplot.visualize()
 
-    s, r, actions, latent, cluster, observation = rl_ppca.collect_samples(n_evaluation_samples, isomorphic_noise=False)
+    s, r, actions, latent, cluster, observation = collector.collect_samples(n_evaluation_samples, isomorphic_noise=False)
 
     print("ITERATION", args.max_iter)
     print("SUCCESS:", np.mean(s))
