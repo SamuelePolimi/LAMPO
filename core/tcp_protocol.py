@@ -11,24 +11,24 @@ class HyperSocket:
         self._conn = conn
 
     def receive_all(self):
-        ret = []
+        ret = b''
         msg = self._conn.recv(HEADERSIZE)
         print("received header", msg)
         msglen = int.from_bytes(msg, byteorder='big')
-        print("new msg len:", msglen)
+        print("recv msg len:", msglen)
 
         remaining_bytes = msglen
         while True:
             if remaining_bytes >= CHUNK_SIZE:
-                ret.append(self._conn.recv(CHUNK_SIZE))
+                ret += self._conn.recv(CHUNK_SIZE)
                 remaining_bytes -= CHUNK_SIZE
             elif remaining_bytes == 0:
                 break
             else:
-                ret.append(self._conn.recv(CHUNK_SIZE))
+                ret += self._conn.recv(CHUNK_SIZE)
                 break
 
-        ret = loads(b''.join(ret))
+        ret = loads(ret)
         print("received", ret)
         return ret
 
@@ -38,6 +38,7 @@ class HyperSocket:
         print("sending msg len", len(byte_message))
         print("sent header", header)
         packet = header + byte_message
+        print("send packet", packet)
         self._conn.sendall(packet)
         print("sent", msg)
 
