@@ -38,7 +38,7 @@ class HyperSocket:
         print("sending msg len", len(byte_message))
         print("sent header", header)
         packet = header + byte_message
-        self._conn.send(packet)
+        self._conn.sendall(packet)
         print("sent", msg)
 
     def _send_cmd(self, cmd: str):
