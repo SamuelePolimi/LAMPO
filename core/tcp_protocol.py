@@ -11,19 +11,20 @@ class HyperSocket:
 
     def receive_all(self):
         ret = b''
-        msg = self._conn.recv(16)
+        msg = self._conn.recv(HEADERSIZE)
         print("received header", msg[:HEADERSIZE])
         msglen = int.from_bytes(msg[:HEADERSIZE], byteorder='big')
+        ret = self._conn.recv(msglen)
         print("new msg len:", msglen)
         # msglen = int(msg[:HEADERSIZE])
-        new_msg = msg[HEADERSIZE:]
-
-        while True:
-            ret += new_msg
-            if len(ret) >= msglen:
-                break
-            else:
-                new_msg = self._conn.recv(16)
+        # new_msg = msg[HEADERSIZE:]
+        #
+        # while True:
+        #     ret += new_msg
+        #     if len(ret) >= msglen:
+        #         break
+        #     else:
+        #         new_msg = self._conn.recv(16)
         ret = loads(ret)
         print("received", ret)
         return ret
