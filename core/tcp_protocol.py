@@ -25,7 +25,7 @@ class HyperSocket:
             elif remaining_bytes == 0:
                 break
             else:
-                ret += self._conn.recv(remaining_bytes)
+                ret += bytes(self._conn.recv(remaining_bytes))
                 break
 
         ret = loads(ret)
