@@ -27,14 +27,13 @@ class HyperSocket:
             else:
                 ret += self._conn.recv(remaining_bytes)
                 break
-        print("receive byte message", ret)
+                
         ret = loads(ret)
         print("received", ret)
         return ret
 
     def send_all(self, msg):
         byte_message = dumps(msg)
-        print("send byte message", byte_message)
         header = len(byte_message).to_bytes(4, byteorder='big')
         print("sending msg len", len(byte_message))
         print("sent header", header)
