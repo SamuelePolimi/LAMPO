@@ -20,7 +20,7 @@ class HyperSocket:
         remaining_bytes = msglen
         while True:
             if remaining_bytes >= CHUNK_SIZE:
-                ret += self._conn.recv(CHUNK_SIZE)
+                ret += bytes(self._conn.recv(CHUNK_SIZE))
                 remaining_bytes -= CHUNK_SIZE
             elif remaining_bytes == 0:
                 break
