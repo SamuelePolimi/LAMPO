@@ -25,6 +25,7 @@ class HyperSocket:
                 break
             else:
                 ret += self._conn.recv(remaining_bytes)
+                break
 
         ret = loads(ret)
         print("received", ret)
