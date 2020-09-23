@@ -1,7 +1,7 @@
 import socket
 from pickle import dumps, loads
 
-HEADERSIZE = 4
+HEADERSIZE = 16
 CHUNK_SIZE = 16
 
 
@@ -13,8 +13,8 @@ class HyperSocket:
     def receive_all(self):
         ret = b''
         msg = self._conn.recv(HEADERSIZE)
-        print("received header", msg[:HEADERSIZE])
-        msglen = int.from_bytes(msg[:HEADERSIZE], byteorder='big')
+        print("received header", msg)
+        msglen = int.from_bytes(msg, byteorder='big')
         print("new msg len:", msglen)
 
         remaining_bytes = msglen
@@ -34,7 +34,7 @@ class HyperSocket:
 
     def send_all(self, msg):
         byte_message = dumps(msg)
-        header = len(byte_message).to_bytes(4, byteorder='big')
+        header = len(byte_message).to_bytes(HEADERSIZE, byteorder='big')
         print("sending msg len", len(byte_message))
         print("sent header", header)
         packet = header + byte_message
@@ -111,6 +111,7 @@ class Client(HyperSocket):
         self._port = port
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print(socket)
         self.socket.connect((ip, port))
 
         super().__init__(self.socket)
