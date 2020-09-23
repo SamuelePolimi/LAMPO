@@ -12,7 +12,8 @@ class HyperSocket:
     def receive_all(self):
         ret = b''
         msg = self._conn.recv(16)
-        msglen = int.from_bytes(b_length[:HEADERSIZE], byteorder='big')
+        print("received header", msg[:HEADERSIZE])
+        msglen = int.from_bytes(msg[:HEADERSIZE], byteorder='big')
         print("new msg len:", msglen)
         # msglen = int(msg[:HEADERSIZE])
         new_msg = msg[HEADERSIZE:]
@@ -30,6 +31,7 @@ class HyperSocket:
     def send_all(self, msg):
         byte_message = dumps(msg)
         header = len(byte_message).to_bytes(4, byteorder='big')
+        print("sent header", header)
         packet = header + byte_message
         self._conn.send(packet)
         print("sent", msg)
