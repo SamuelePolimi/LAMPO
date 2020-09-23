@@ -2,7 +2,7 @@ import socket
 from pickle import dumps, loads
 
 HEADERSIZE = 4
-
+CHUNK_SIZE = 1024
 
 class HyperSocket:
 
@@ -14,17 +14,18 @@ class HyperSocket:
         msg = self._conn.recv(HEADERSIZE)
         print("received header", msg[:HEADERSIZE])
         msglen = int.from_bytes(msg[:HEADERSIZE], byteorder='big')
-        ret = self._conn.recv(msglen)
         print("new msg len:", msglen)
-        # msglen = int(msg[:HEADERSIZE])
-        # new_msg = msg[HEADERSIZE:]
-        #
-        # while True:
-        #     ret += new_msg
-        #     if len(ret) >= msglen:
-        #         break
-        #     else:
-        #         new_msg = self._conn.recv(16)
+
+        remaining_bytes = msglen
+        while True:
+            if remaining_bytes >= CHUNK_SIZE:
+                ret += self._conn.recv(CHUNK_SIZE)
+                remaining_bytes -= CHUNK_SIZE
+            elif remaining_bytes == 0:
+                break
+            else:
+                ret += self._conn.recv(remaining_bytes)
+
         ret = loads(ret)
         print("received", ret)
         return ret
