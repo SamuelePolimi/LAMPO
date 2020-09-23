@@ -36,7 +36,7 @@ class TCPTask(TaskInterface):
 class TCPClientExample:
 
     def __init__(self, ip, port, state_dim):
-        self._server = Client(port)
+        self._server = Client(ip, port)
 
         # First thing, wait for context_dim_request
         self._server.wait_context_dim_request()
