@@ -10,9 +10,9 @@ from core.fancy_print import f_print, PTYPE
 
 class TCPTask(TaskInterface):
 
-    def __init__(self, ip, port, n_features):
+    def __init__(self, port, n_features):
         super().__init__(n_features)
-        self._conn = Client(ip, port)
+        self._conn = Server(port)
         self._state_dim = self._conn.read_context_dim()
         self._conn.send_n_features(n_features)
         f_print("Task Info retreived.", PTYPE.ok_green)
@@ -33,10 +33,10 @@ class TCPTask(TaskInterface):
         return self._conn.send_context_request()
 
 
-class TCPServerExample:
+class TCPClientExample:
 
-    def __init__(self, port, state_dim):
-        self._server = Server(port)
+    def __init__(self, ip, port, state_dim):
+        self._server = Client(port)
 
         # First thing, wait for context_dim_request
         self._server.wait_context_dim_request()

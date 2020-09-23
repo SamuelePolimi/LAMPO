@@ -53,16 +53,20 @@ class HyperSocket:
         return data_rcv
 
 
-class Client(HyperSocket):
+class Server(HyperSocket):
 
-    def __init__(self, ip: str, port: int):
+    def __init__(self, port: int):
         self._ip = ip
         self._port = port
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((ip, port))
+        self.socket.bind(("", port))
+        self.socket.listen()
 
-        super().__init__(self.socket)
+        conn, self._address = self.socket.accept()
+        print("Connection accepted", conn)
+
+        super().__init__(conn)
 
     def send_context_request(self):
         self._send_cmd("CONTEXT")
@@ -93,17 +97,15 @@ class Client(HyperSocket):
         return self._send_value(n_features)
 
 
-class Server(HyperSocket):
+class Client(HyperSocket):
 
-    def __init__(self, port: int):
+    def __init__(self, ip: str, port: int):
         self._port = port
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind(("", port))
-        self.socket.listen()
+        self.socket.connect((ip, port))
 
-        conn, self._address = self.socket.accept()
-        super().__init__(conn)
+        super().__init__(self.socket)
 
     def wait_context_request(self):
         return self._wait_cmd("CONTEXT")

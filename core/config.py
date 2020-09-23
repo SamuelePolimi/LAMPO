@@ -5,7 +5,7 @@ from core.lab_connection import TCPTask
 
 config = {
     "tcp": {
-        "task_box": lambda headless: TCPTask("localhost", 5050, 20),
+        "task_box": lambda headless: TCPTask(5055, 20),
         "n_features": 20,
         "n_cluster": 3,
         "latent_dim": 3,
