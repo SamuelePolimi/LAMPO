@@ -1,5 +1,6 @@
 import socket
 from pickle import dumps, loads
+import struct
 
 HEADERSIZE = 16
 CHUNK_SIZE = 16
@@ -9,38 +10,29 @@ class HyperSocket:
 
     def __init__(self, conn):
         self._conn = conn
+        self._buffer = bytearray()
 
     def receive_all(self):
-        ret = b''
-        msg = self._conn.recv(HEADERSIZE)
-        print("received header", msg)
-        msglen = int.from_bytes(msg, byteorder='big')
-        print("recv msg len:", msglen)
+        while len(self._buffer) < 4 or len(self._buffer) < struct.unpack("<L", self._buffer[:4])[0] + 4:
+            new_bytes = self._conn.recv(16)
+            if len(new_bytes) == 0:
+                return None
+            self._buffer += new_bytes
 
-        remaining_bytes = msglen
-        while True:
-            if remaining_bytes >= CHUNK_SIZE:
-                ret += self._conn.recv(CHUNK_SIZE)
-                remaining_bytes -= CHUNK_SIZE
-            elif remaining_bytes == 0:
-                break
-            else:
-                ret += self._conn.recv(CHUNK_SIZE)
-                break
+        length = struct.unpack("<L", self._buffer[:4])[0]
+        header, body = self._buffer[:4], self._buffer[4:length + 4]
 
-        ret = loads(ret)
-        print("received", ret)
-        return ret
+        obj = loads(body)
 
-    def send_all(self, msg):
-        byte_message = dumps(msg)
-        header = len(byte_message).to_bytes(HEADERSIZE, byteorder='big')
-        print("sending msg len", len(byte_message))
-        print("sent header", header)
-        packet = header + byte_message
-        print("send packet", packet)
-        self._conn.sendall(packet)
-        print("sent", msg)
+        self._buffer = self._buffer[length + 4:]
+
+        return obj
+
+    def send_all(self, d):
+        body = dumps(d)
+        header = struct.pack("<L", len(body))
+        msg = header + body
+        self._conn.send(msg)
 
     def _send_cmd(self, cmd: str):
         self.send_all(cmd)
