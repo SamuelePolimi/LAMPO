@@ -4,7 +4,7 @@ from core.rl_bench_box import RLBenchBox
 from core.lab_connection import TCPTask
 
 config = {
-    "test_task":{
+    "tcp": {
         "task_box": lambda headless: TCPTask("localhost", 5050, 20),
         "n_features": 20,
         "n_cluster": 3,
