@@ -2,7 +2,8 @@ import socket
 from pickle import dumps, loads
 
 HEADERSIZE = 4
-CHUNK_SIZE = 1024
+CHUNK_SIZE = 16
+
 
 class HyperSocket:
 
@@ -34,6 +35,7 @@ class HyperSocket:
     def send_all(self, msg):
         byte_message = dumps(msg)
         header = len(byte_message).to_bytes(4, byteorder='big')
+        print("sending msg len", len(byte_message))
         print("sent header", header)
         packet = header + byte_message
         self._conn.send(packet)
