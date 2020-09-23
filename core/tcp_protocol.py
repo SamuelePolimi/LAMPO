@@ -1,7 +1,7 @@
 import socket
 from pickle import dumps, loads
 
-HEADERSIZE = 10
+HEADERSIZE = 4
 
 
 class HyperSocket:
@@ -12,8 +12,9 @@ class HyperSocket:
     def receive_all(self):
         ret = b''
         msg = self._conn.recv(16)
-        # print("new msg len:", msg[:HEADERSIZE])
-        msglen = int(msg[:HEADERSIZE])
+        msglen = int.from_bytes(b_length[:HEADERSIZE], byteorder='big')
+        print("new msg len:", msglen)
+        # msglen = int(msg[:HEADERSIZE])
         new_msg = msg[HEADERSIZE:]
 
         while True:
@@ -23,14 +24,15 @@ class HyperSocket:
             else:
                 new_msg = self._conn.recv(16)
         ret = loads(ret)
-        # print("received", ret)
+        print("received", ret)
         return ret
 
     def send_all(self, msg):
         byte_message = dumps(msg)
-        packet = bytes(f"{len(byte_message):<{HEADERSIZE}}", 'utf-8') + byte_message
+        header = len(byte_message).to_bytes(4, byteorder='big')
+        packet = header + byte_message
         self._conn.send(packet)
-        # print("sent", msg)
+        print("sent", msg)
 
     def _send_cmd(self, cmd: str):
         self.send_all(cmd)
@@ -56,7 +58,6 @@ class HyperSocket:
 class Server(HyperSocket):
 
     def __init__(self, port: int):
-        self._ip = ip
         self._port = port
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
