@@ -29,7 +29,7 @@ class HyperSocket:
         return obj
 
     def send_all(self, d):
-        body = dumps(d)
+        body = dumps(d, protocol=2)
         header = struct.pack("<L", len(body))
         msg = header + body
         self._conn.send(msg)
