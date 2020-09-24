@@ -22,7 +22,7 @@ class HyperSocket:
         length = struct.unpack("<L", self._buffer[:4])[0]
         header, body = self._buffer[:4], self._buffer[4:length + 4]
 
-        obj = loads(body)
+        obj = loads(body, encoding='latin1')
 
         self._buffer = self._buffer[length + 4:]
 
