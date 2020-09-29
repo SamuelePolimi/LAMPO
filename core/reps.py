@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.optimize import minimize
-from pomegranate import *
-
 
 class EpisodicREPS:
 
