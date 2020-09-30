@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize
 
+
 class EpisodicREPS:
 
     def __init__(self, kl_bound=0.5):
