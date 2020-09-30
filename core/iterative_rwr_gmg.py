@@ -11,7 +11,7 @@ class IRWRGMM:
     Colome and Torras 2018.
     """
 
-    def __init__(self, n_componente=1, tol=1E-5, n_init=100, max_iter=100, discount=0.99):
+    def __init__(self, n_componente=1, tol=1E-5, n_init=100, max_iter=100, discount=0.99, cov_regularization=1E-8):
         self._n_components = n_componente
         self._tol = tol
         self._data = None
@@ -26,6 +26,8 @@ class IRWRGMM:
         self._max_iter = max_iter
 
         self._discount = discount
+
+        self._reg = cov_regularization
 
     def _initialize(self, X):
         n_samples, observed_dimensions = X.shape
@@ -53,13 +55,14 @@ class IRWRGMM:
         if self._mus is None:
             first = True
             self._initialize(X)
-        w = w/np.sum(w)
+        # w = w/np.sum(w)
         old_log_likelihood = np.inf
         log_resp, log_likelihood = self.get_log_responsability(X, w)
         it = 0
         old_mu = np.copy(self._mus)
         old_cov = np.copy(self._covs)
         old_n = np.copy(self._n)
+        reg = self._reg * np.eye(X.shape[1])
         while np.abs(old_log_likelihood - log_likelihood) > self._tol and it < self._max_iter:
             n_i = []
             for i in range(self._n_components):
@@ -68,13 +71,18 @@ class IRWRGMM:
                     n = np.sum(d)
                     n_i.append(n)
                     self._mus[i] = np.einsum("i,ij->j", d, X)/n                             # eq 20
-                    self._covs[i] = np.cov(X, rowvar=False, aweights=d)                     # eq 21
+                    self._covs[i] = np.cov(X, rowvar=False, aweights=d)  + reg              # eq 21
                 else:
-                    n = np.sum(d) + old_n                                                 # eq 25
+                    n = np.sum(d) + old_n                                                   # eq 25
                     n_i.append(n)
-                    self._mus[i] = (self._n*old_mu[i] + np.einsum("i,ij->j", d, X))/n       # eq 27
-                    self._covs[i] = (self._n*old_cov[i] + np.sum(d)*np.cov(X, rowvar=False, aweights=d))/n
-                                # eq 21
+                    if np.sum(d) >= 1E-10:
+                        self._mus[i] = (self._n*old_mu[i] + np.einsum("i,ij->j", d, X))/n       # eq 27
+                        self._covs[i] = (self._n*old_cov[i] + np.sum(d)*np.cov(X, rowvar=False, aweights=d))/n + reg
+                                    # eq 21
+                    else:
+                        self._mus[i] = old_mu[i]
+                        self._covs[i] = old_cov[i]
+
             self._n = np.sum(n)
             self._log_pi = np.log(np.array(n_i)/np.sum(n_i))                            # eq 22
             old_log_likelihood = np.copy(log_likelihood)
@@ -83,11 +91,10 @@ class IRWRGMM:
             print("iter", it, log_likelihood)
         self._n = self._n * self._discount                                              # eq 29
 
-
     def get_log_responsability(self, X, w):
         log_p = []
         for i in range(self._n_components):
-            dist = scipy_normal(self._mus[i], self._covs[i])
+            dist = scipy_normal(self._mus[i], self._covs[i], allow_singular=True)
             log_p.append(dist.logpdf(X) + self._log_pi[i])
         z = sum_logs_np(log_p, axis=0)
         return np.array(log_p) - z, np.mean(z*w)
@@ -107,7 +114,7 @@ class IRWRGMM:
             new_cov = cov_yy - cov_xy.T @ cov_xx_i @ cov_xy
             mus.append(new_mu)
             covs.append(new_cov)
-            gauss = scipy_normal(new_mu, new_cov)
+            gauss = scipy_normal(new_mu, new_cov, allow_singular=True)
             resp = gauss.logpdf(x) + self._log_pi
 
         select_p = np.exp(np.array(resp) - sum_logs_np(resp))

@@ -29,7 +29,7 @@ class CT_ImitationLearning:
 
     def predict(self, context):
         z, k = self._gmm.predict(np.squeeze(context), dim=self._state_dims)
-        return self.pca.inverse_transform(z), z, k
+        return np.squeeze(self.pca.inverse_transform(np.expand_dims(z, 0))), z, k
 
 
 class CT_ReinforcementLearning:
@@ -40,10 +40,10 @@ class CT_ReinforcementLearning:
 
     def add_dataset(self, context, movement, reward):
         latent = self._imitation.pca.transform(movement)
-        data = np.concatenate([context, latent], axis=0)
+        data = np.concatenate([context, latent], axis=1)
         w = self._reps.optimize(reward, data)
-        self._imitation.fit_new_data(data, w)
+        self._imitation._gmm.fit_new_data(data, w)
 
     def generate_full(self, x, **kwargs):
-        self._imitation.predict(x)
+        return self._imitation.predict(x)
 

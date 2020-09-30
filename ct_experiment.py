@@ -107,6 +107,7 @@ if __name__ == "__main__":
 
     imitation = CT_ImitationLearning(state_dim, parameters.shape[1] - config[args.task_name]["latent_dim"],
                                      config[args.task_name]["latent_dim"], n_clusters)
+    imitation.fit(parameters[:, :state_dim], parameters[:, state_dim:])
 
     n_evaluation_samples = args.n_evaluations
     n_batch = args.batch_size
@@ -142,7 +143,7 @@ if __name__ == "__main__":
         # print("KL %f <= %f" % (sr.rlmodel._g, kl_bound))
         # if kl_context_bound> 0:
         #     print("KL context %f <= %f" % (sr.rlmodel._h, kl_context_bound))
-        # myplot.notify_inner_loop(sr.rlmodel._f, sr.rlmodel._g, sr.rlmodel.avg_entropy, sr.rlmodel._h)
+        myplot.notify_inner_loop(0., 0., 0., 0.)
 
         if args.plot:
             myplot.visualize()

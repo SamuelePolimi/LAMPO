@@ -13,6 +13,6 @@ class EpisodicREPS:
         f = lambda eta: self.kl_bound * eta**2 + eta**2 * np.log(np.mean(np.exp(R/eta**2)))
         self._eta = minimize(f, self._eta, method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True}).x**2
         print("eta", self._eta)
-        return np.exp(rewards / self._eta)
+        return np.exp(rewards / self._eta**2)
 
 
