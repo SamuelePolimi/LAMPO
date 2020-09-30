@@ -34,14 +34,14 @@ class CT_ImitationLearning:
 
 class CT_ReinforcementLearning:
 
-    def __init__(self, imitation):
+    def __init__(self, imitation, kl_bound=0.05):
         self._imitation = imitation
-        self._reps = EpisodicREPS()
+        self._reps = EpisodicREPS(kl_bound)
 
     def add_dataset(self, context, movement, reward):
         latent = self._imitation.pca.transform(movement)
         data = np.concatenate([context, latent], axis=1)
-        w = self._reps.optimize(reward, data)
+        w = self._reps.optimize(reward)
         self._imitation._gmm.fit_new_data(data, w)
 
     def generate_full(self, x, **kwargs):

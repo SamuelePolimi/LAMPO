@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     normalize = args.normalize
 
-    rl_model = CT_ReinforcementLearning(imitation)
+    rl_model = CT_ReinforcementLearning(imitation, kl_bound=kl_bound)
 
     myplot = LampoMonitor(kl_bound, kl_context_bound=kl_context_bound,
                           title="class_log kl=%.2f, %d samples, kl_type=%s, normalize=%s" %

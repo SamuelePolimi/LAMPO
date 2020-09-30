@@ -5,6 +5,19 @@ from scipy.stats import multivariate_normal as scipy_normal
 from sklearn.covariance import ledoit_wolf
 
 
+def stable_cov(cov, reg):
+    reg_new = np.copy(reg)
+    cov_new = np.copy(cov)
+    while True:
+        try:
+            np.linalg.inv(cov_new)
+            break
+        except:
+            cov_new += reg_new
+            reg_new *= 2.
+    return cov_new
+
+
 class IRWRGMM:
     """
     Iterative Reward Weighted Respojnsability Gaussian Mixture Model.
@@ -71,14 +84,17 @@ class IRWRGMM:
                     n = np.sum(d)
                     n_i.append(n)
                     self._mus[i] = np.einsum("i,ij->j", d, X)/n                             # eq 20
-                    self._covs[i] = np.cov(X, rowvar=False, aweights=d)  + reg              # eq 21
+                    self._covs[i] = stable_cov(np.cov(X, rowvar=False, aweights=d), reg)             # eq 21
                 else:
                     n = np.sum(d) + old_n                                                   # eq 25
                     n_i.append(n)
                     if np.sum(d) >= 1E-10:
                         self._mus[i] = (self._n*old_mu[i] + np.einsum("i,ij->j", d, X))/n       # eq 27
-                        self._covs[i] = (self._n*old_cov[i] + np.sum(d)*np.cov(X, rowvar=False, aweights=d))/n + reg
-                                    # eq 21
+                        Y = np.einsum("i,ij->ij", d, X-self._mus[i])
+                        cov = np.einsum('ki,kj->ij', Y, Y)
+                        self._covs[i] = stable_cov(self._n/n * old_cov[i] + cov/n,
+                                                   reg)
+                                        # eq 21
                     else:
                         self._mus[i] = old_mu[i]
                         self._covs[i] = old_cov[i]
