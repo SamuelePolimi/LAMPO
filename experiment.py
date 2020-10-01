@@ -1,5 +1,5 @@
 import argparse
-from core.collector import RunModel
+from core.imitation_learning import PPCAImitation, RunModel
 from mppca.mixture_ppca import MPPCA
 from core.task_interface import TaskInterface
 from core.plot import LampoMonitor
@@ -8,6 +8,8 @@ import numpy as np
 from core.model import RLModel
 from core.config import config
 import json
+
+import matplotlib.pyplot as plt
 
 
 def get_arguments_dict():
@@ -129,6 +131,7 @@ if __name__ == "__main__":
 
     sr = Lampo(rl_model, wait=not args.slurm)
 
+    # TODO: start to modify here
     collector = RunModel(task, rl_model, args.dense_reward)
     for i in range(args.max_iter):
 
@@ -161,4 +164,3 @@ if __name__ == "__main__":
     if args.save:
         myplot.save(experiment_path + "result_%d.npz" % args.id)
         sr.rlmodel.save(experiment_path + "model_%d.npz" % args.id)
-

@@ -46,13 +46,6 @@ def get_arguments_dict():
     parser.add_argument("-r", "--slurm",
                         help="Don't look for CPU usage & immediately run experiments.",
                         action="store_true")
-    parser.add_argument("-z", "--normalize",
-                        help="Self-Normalize Importance Sampling.",
-                        action="store_true")
-    parser.add_argument("-c", "--context_kl_bound",
-                        help="Bound the context kl.",
-                        type=float,
-                        default=50.)
     parser.add_argument("-k", "--kl_bound",
                         help="Bound the improvement kl.",
                         type=float,
@@ -75,9 +68,6 @@ def get_arguments_dict():
     parser.add_argument("--dense_reward",
                         help="Use dense reward",
                         action="store_true")
-    parser.add_argument("--id_start",
-                        help="How many runs would you like to perform.",
-                        type=int, default=-1)
 
 
     args = parser.parse_args()
@@ -86,14 +76,14 @@ def get_arguments_dict():
 
 
 def work(arg_parse, id):
-    proc = subprocess.Popen(["python", "experiment.py"] + experiment_line(arg_parse, id))
+    proc = subprocess.Popen(["python", "ct_experiment.py"] + experiment_line(arg_parse, id))
     proc.wait()
 
 
 def experiment_line(arg_parse: dict, id):
     positional = ["folder_name"]
     booleans = ["plot", "normalize", "forward", "load", "dense_reward", "slurm"]
-    exclude = ["n_runs", "date", "save", "id_start"]
+    exclude = ["n_runs", "date", "save"]
     ret = []
     for p in positional:
         ret.append(arg_parse[p])
@@ -123,27 +113,19 @@ if __name__ == "__main__":
     print(" Experiment '%s' started." % args_dict["folder_name"])
     print("-"*20)
 
-    experiment_path = "experiments/%s/" % args_dict["folder_name"]
+    experiment_path = "ct_experiments/%s/" % args_dict["folder_name"]
     pprint.pprint(args_dict)
     print(experiment_line(args_dict, 2))
 
-    if args_dict["id_start"] <= 0:
-        if create_folder(experiment_path):
-            with open(experiment_path + 'configuration.json', 'w') as fp:
-                json.dump(args_dict, fp, indent=4, sort_keys=True)
+    if create_folder(experiment_path):
+        with open(experiment_path + 'configuration.json', 'w') as fp:
+            json.dump(args_dict, fp, indent=4, sort_keys=True)
 
-            if not args_dict["slurm"]:
+        if not args_dict["slurm"]:
 
-                tp = ThreadPool(5)
-                for idx in range(args_dict["n_runs"]):
-                    tp.apply_async(work, (args_dict, idx))
+            tp = ThreadPool(5)
+            for idx in range(args_dict["n_runs"]):
+                tp.apply_async(work, (args_dict, idx))
 
-                tp.close()
-                tp.join()
-    else:
-        tp = ThreadPool(5)
-        for idx in range(args_dict["id_start"], args_dict["n_runs"] + args_dict["id_start"]):
-            tp.apply_async(work, (args_dict, idx))
-
-        tp.close()
-        tp.join()
+            tp.close()
+            tp.join()

@@ -3,10 +3,8 @@
 ###################################################################################
 import numpy as np
 
-from herl.dataset import Dataset, Domain, Variable
 from core.reps import EpisodicREPS
 from sklearn.decomposition import PCA
-from sklearn.mixture import GaussianMixture
 from core.iterative_rwr_gmg import IRWRGMM
 
 
@@ -17,7 +15,6 @@ class CT_ImitationLearning:
         self._latent_dims = latent_dims
         self._parameters_dims = parameters_dims
         self._n_clusters = n_clusters
-        self._domain = Domain(Variable("context", state_dims), Variable("latent", latent_dims))
 
     def fit(self, context, parameters):
         self.pca = PCA(self._latent_dims)

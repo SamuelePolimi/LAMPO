@@ -1,13 +1,10 @@
+from core.config import config
 import argparse
 from core.collector import RunModel
 from core.colome_torras import CT_ImitationLearning, CT_ReinforcementLearning
-from mppca.mixture_ppca import MPPCA
 from core.task_interface import TaskInterface
 from core.plot import LampoMonitor
-from core.lampo import Lampo
 import numpy as np
-from core.model import RLModel
-from core.config import config
 import json
 
 
@@ -32,9 +29,6 @@ def get_arguments_dict():
     parser.add_argument("-v", "--visualize_robot",
                         help="Show robotic behavior",
                         action="store_true")
-    parser.add_argument("-z", "--normalize",
-                        help="Normalized Importance Sampling",
-                        action="store_true")
     parser.add_argument("-s", "--save",
                         help="Save the results in the experiment directory.",
                         action="store_true")
@@ -51,10 +45,6 @@ def get_arguments_dict():
     parser.add_argument("--dense_reward",
                         help="Use dense reward",
                         action="store_true")
-    parser.add_argument("-c", "--context_kl_bound",
-                        help="Bound the context kl.",
-                        type=float,
-                        default=50.)
     parser.add_argument("-k", "--kl_bound",
                         help="Bound the improvement kl.",
                         type=float,
@@ -89,6 +79,7 @@ def process_parameters(parameters, n_samples, n_context, noise=0.03):
 
 
 if __name__ == "__main__":
+    print("ciao")
     args = get_arguments_dict()
     experiment_path = "experiments/%s/" % args.folder_name
     if args.load:
@@ -113,19 +104,16 @@ if __name__ == "__main__":
     n_batch = args.batch_size
 
     kl_bound = args.kl_bound
-    kl_context_bound = args.context_kl_bound
     if args.forward:
         kl_type = "forward"
     else:
         kl_type = "reverse"  # "reverse"
 
-    normalize = args.normalize
-
     rl_model = CT_ReinforcementLearning(imitation, kl_bound=kl_bound)
 
-    myplot = LampoMonitor(kl_bound, kl_context_bound=kl_context_bound,
-                          title="class_log kl=%.2f, %d samples, kl_type=%s, normalize=%s" %
-                          (kl_bound, n_batch, kl_type, normalize))
+    myplot = LampoMonitor(kl_bound, kl_context_bound=0.,
+                          title="class_log kl=%.2f, %d samples" %
+                          (kl_bound, n_batch))
 
 
     collector = RunModel(task, rl_model, args.dense_reward)
@@ -159,5 +147,4 @@ if __name__ == "__main__":
 
     if args.save:
         myplot.save(experiment_path + "result_%d.npz" % args.id)
-        sr.rlmodel.save(experiment_path + "model_%d.npz" % args.id)
 

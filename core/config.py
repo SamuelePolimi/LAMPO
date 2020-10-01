@@ -1,15 +1,15 @@
-from rlbench.tasks import ReachTarget as RT, WaterPlants, CloseDrawer
+from rlbench.tasks import WaterPlants, CloseDrawer
 from core.augmented_tasks.tasks import ReachTarget
 from core.rl_bench_box import RLBenchBox
 from core.lab_connection import TCPTask
 
 config = {
     "tcp": {
-        "task_box": lambda headless: TCPTask(5055, 20),
+        "task_box": lambda headless: TCPTask(5056, 20),
         "n_features": 20,
-        "n_cluster": 3,
+        "n_cluster": 6,
         "latent_dim": 3,
-        "state_dim": 3,
+        "state_dim": 7,
         "n_samples": 200
     },
     "close_drawer": {
