@@ -13,6 +13,7 @@ def stable_cov(cov, reg):
             np.linalg.inv(cov_new)
             break
         except:
+            print("singular!")
             cov_new += reg_new
             reg_new *= 2.
     return cov_new
@@ -20,17 +21,17 @@ def stable_cov(cov, reg):
 
 class IRWRGMM:
     """
-    Iterative Reward Weighted Respojnsability Gaussian Mixture Model.
+    Iterative Reward Weighted Responsability Gaussian Mixture Model.
     Colome and Torras 2018.
     """
 
-    def __init__(self, n_componente=1, tol=1E-5, n_init=100, max_iter=100, discount=0.99, cov_regularization=1E-8):
+    def __init__(self, n_componente=1, tol=1E-5, n_init=100, max_iter=100, discount=0.98, cov_regularization=1E-15):
         self._n_components = n_componente
         self._tol = tol
         self._data = None
         self._dim = None
 
-        self._n = 0
+        self._n_i = 0
         self._mus = None
         self._covs = None
         self._log_pi = None
@@ -74,9 +75,10 @@ class IRWRGMM:
         it = 0
         old_mu = np.copy(self._mus)
         old_cov = np.copy(self._covs)
-        old_n = np.copy(self._n)
+        old_n_i = np.copy(self._n_i)
         reg = self._reg * np.eye(X.shape[1])
         while np.abs(old_log_likelihood - log_likelihood) > self._tol and it < self._max_iter:
+            print("iter", it, log_likelihood)
             n_i = []
             for i in range(self._n_components):
                 d = w * np.exp(log_resp[i])
@@ -84,36 +86,37 @@ class IRWRGMM:
                     n = np.sum(d)
                     n_i.append(n)
                     self._mus[i] = np.einsum("i,ij->j", d, X)/n                             # eq 20
-                    self._covs[i] = stable_cov(np.cov(X, rowvar=False, aweights=d), reg)             # eq 21
+                    Y = X - self._mus[i]
+                    cov = np.einsum('k,ki,kj->ij', d, Y, Y)
+                    self._covs[i] = stable_cov(cov/n, reg)                                  # eq 21
                 else:
-                    n = np.sum(d) + old_n                                                   # eq 25
+                    n = np.sum(d) + old_n_i[i]                                                   # eq 25
                     n_i.append(n)
                     if np.sum(d) >= 1E-10:
-                        self._mus[i] = (self._n*old_mu[i] + np.einsum("i,ij->j", d, X))/n       # eq 27
-                        Y = np.einsum("i,ij->ij", d, X-self._mus[i])
-                        cov = np.einsum('ki,kj->ij', Y, Y)
-                        self._covs[i] = stable_cov(self._n/n * old_cov[i] + cov/n,
+                        self._mus[i] = (old_n_i[i]*old_mu[i] + np.einsum("i,ij->j", d, X))/n       # eq 27
+                        Y = X - self._mus[i]#np.einsum("i,ij->j", d, X)/np.sum(d)  # np.einsum("i,ij->j", d, X)/np.sum(d) #self._mus[i]
+                        cov = np.einsum('k,ki,kj->ij', d, Y, Y)
+                        self._covs[i] = stable_cov(old_n_i[i]/n * old_cov[i] + cov/n,
                                                    reg)
                                         # eq 21
-                    else:
-                        self._mus[i] = old_mu[i]
-                        self._covs[i] = old_cov[i]
 
-            self._n = np.sum(n)
-            self._log_pi = np.log(np.array(n_i)/np.sum(n_i))                            # eq 22
+            self._n_i = np.copy(n_i)
+            # print("n_i", self._n_i)
+            # print("n", np.sum(self._n_i))
+            self._log_pi = np.log(np.array(n_i)) - np.log(np.sum(n_i))                            # eq 22
             old_log_likelihood = np.copy(log_likelihood)
             log_resp, log_likelihood = self.get_log_responsability(X, w)
             it += 1
-            print("iter", it, log_likelihood)
-        self._n = self._n * self._discount                                              # eq 29
+        self._n_i = self._n_i * self._discount                                              # eq 29
 
     def get_log_responsability(self, X, w):
         log_p = []
         for i in range(self._n_components):
             dist = scipy_normal(self._mus[i], self._covs[i], allow_singular=True)
             log_p.append(dist.logpdf(X) + self._log_pi[i])
+        # log_p = np.log(np.exp(log_p) + 1E-10)  # avoid collapse
         z = sum_logs_np(log_p, axis=0)
-        return np.array(log_p) - z, np.mean(z*w)
+        return np.array(log_p) - z, np.sum(w*z)/np.sum(w)
 
     def predict(self, x, dim):
         mus = []
@@ -130,11 +133,11 @@ class IRWRGMM:
             new_cov = cov_yy - cov_xy.T @ cov_xx_i @ cov_xy
             mus.append(new_mu)
             covs.append(new_cov)
-            gauss = scipy_normal(new_mu, new_cov, allow_singular=True)
+            gauss = scipy_normal(mu_x, cov_xx, allow_singular=True)
             resp = gauss.logpdf(x) + self._log_pi
 
         select_p = np.exp(np.array(resp) - sum_logs_np(resp))
-        cluster = np.random.choice(range(self._n_components), p=select_p)
+        cluster = np.random.choice(range(self._n_components), p=select_p/np.sum(select_p))
         return np.random.multivariate_normal(mus[cluster], covs[cluster]), cluster
 
 

@@ -10,23 +10,33 @@ from core.iterative_rwr_gmg import IRWRGMM
 
 class CT_ImitationLearning:
 
-    def __init__(self, state_dims, parameters_dims, latent_dims, n_clusters):
+    def __init__(self, state_dims, parameters_dims, latent_dims, n_clusters, use_dr=True):
         self._state_dims = state_dims
         self._latent_dims = latent_dims
         self._parameters_dims = parameters_dims
         self._n_clusters = n_clusters
 
+        self._use_dr = use_dr
+
     def fit(self, context, parameters):
-        self.pca = PCA(self._latent_dims)
-        self.pca.fit(parameters)
-        self._latent = self.pca.transform(parameters)
-        new_data = np.concatenate([context, self._latent], axis=1)
+        if self._use_dr:
+            self.pca = PCA(self._latent_dims)
+            self.pca.fit(parameters)
+            self._latent = self.pca.transform(parameters)
+            new_data = np.concatenate([context, self._latent], axis=1)
+        else:
+            self._latent = parameters
+            new_data = np.concatenate([context, parameters], axis=1)
+
         self._gmm = IRWRGMM(self._n_clusters)
         self._gmm.fit_new_data(new_data, np.ones(context.shape[0]))
 
     def predict(self, context):
         z, k = self._gmm.predict(np.squeeze(context), dim=self._state_dims)
-        return np.squeeze(self.pca.inverse_transform(np.expand_dims(z, 0))), z, k
+        if self._use_dr:
+            return np.squeeze(self.pca.inverse_transform(np.expand_dims(z, 0))), z, k
+        else:
+            return z, z, k
 
 
 class CT_ReinforcementLearning:

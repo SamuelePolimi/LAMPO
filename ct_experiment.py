@@ -81,7 +81,7 @@ def process_parameters(parameters, n_samples, n_context, noise=0.03):
 if __name__ == "__main__":
     print("ciao")
     args = get_arguments_dict()
-    experiment_path = "experiments/%s/" % args.folder_name
+    experiment_path = "ct_experiments/%s/" % args.folder_name
     if args.load:
         with open(experiment_path + "configuration.json") as f:
             args = Objectview(json.load(f))
@@ -114,7 +114,6 @@ if __name__ == "__main__":
     myplot = LampoMonitor(kl_bound, kl_context_bound=0.,
                           title="class_log kl=%.2f, %d samples" %
                           (kl_bound, n_batch))
-
 
     collector = RunModel(task, rl_model, args.dense_reward)
     for i in range(args.max_iter):
