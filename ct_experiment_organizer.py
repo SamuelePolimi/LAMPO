@@ -68,6 +68,9 @@ def get_arguments_dict():
     parser.add_argument("--dense_reward",
                         help="Use dense reward",
                         action="store_true")
+    parser.add_argument("--id_start",
+                        help="How many runs would you like to perform.",
+                        type=int, default=-1)
 
 
     args = parser.parse_args()
@@ -83,7 +86,7 @@ def work(arg_parse, id):
 def experiment_line(arg_parse: dict, id):
     positional = ["folder_name"]
     booleans = ["plot", "normalize", "forward", "load", "dense_reward", "slurm"]
-    exclude = ["n_runs", "date", "save"]
+    exclude = ["n_runs", "date", "save", "id_start"]
     ret = []
     for p in positional:
         ret.append(arg_parse[p])
