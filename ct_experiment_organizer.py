@@ -117,15 +117,23 @@ if __name__ == "__main__":
     pprint.pprint(args_dict)
     print(experiment_line(args_dict, 2))
 
-    if create_folder(experiment_path):
-        with open(experiment_path + 'configuration.json', 'w') as fp:
-            json.dump(args_dict, fp, indent=4, sort_keys=True)
+    if args_dict["id_start"] <= 0:
+        if create_folder(experiment_path):
+            with open(experiment_path + 'configuration.json', 'w') as fp:
+                json.dump(args_dict, fp, indent=4, sort_keys=True)
 
-        if not args_dict["slurm"]:
+            if not args_dict["slurm"]:
 
-            tp = ThreadPool(5)
-            for idx in range(args_dict["n_runs"]):
-                tp.apply_async(work, (args_dict, idx))
+                tp = ThreadPool(5)
+                for idx in range(args_dict["n_runs"]):
+                    tp.apply_async(work, (args_dict, idx))
 
-            tp.close()
-            tp.join()
+                tp.close()
+                tp.join()
+    else:
+        tp = ThreadPool(5)
+        for idx in range(args_dict["id_start"], args_dict["n_runs"] + args_dict["id_start"]):
+            tp.apply_async(work, (args_dict, idx))
+
+        tp.close()
+        tp.join()
