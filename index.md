@@ -1,3 +1,5 @@
+# LAMPO
+
 ## Motivation
 
 Current state-of-the-art robot-learning algorithm, divide the learning in two phases: a first imitation-learning from demonstration and a subsequent reinforcement learning policy improvement. 
