@@ -49,6 +49,7 @@ class RLModel(DictSerializable):
     torch_vars = ["log_base_pi", "mu", "_base_diag_Sigma"]
     lists = ["_rho_den", "_parameter_list"]
 
+    # kl_reg was 0.01
     def __init__(self, mppca: MPPCA, context_dim, normalize=True, kl_type="forward", kl_bound=0.5, kl_bound_context=1., kl_reg=0.01):
 
         torch.set_default_tensor_type('torch.DoubleTensor')

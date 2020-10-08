@@ -103,7 +103,7 @@ if __name__ == "__main__":
     state_dim = task.get_context_dim()
 
 
-    parameters = task.get_demonstrations()
+    parameters = task.get_demonstrations()[:args.imitation_learning]
     parameters = process_parameters(parameters, args.imitation_learning, state_dim, args.il_noise)
 
     mppca = MPPCA(n_clusters, config[args.task_name]["latent_dim"], n_init=500)

@@ -68,7 +68,7 @@ class Lampo:
         self.rlmodel._set_x(xL.x)
         # print(xL)
         self.rlmodel.save_new_policy()
-        print("mu", np.exp(self.rlmodel._last_mu))
+        print("mu", self.rlmodel._last_mu)
         print("pi", np.exp(self.rlmodel._last_log_pi))
         print("Sigma", self.rlmodel._last_Sigma)
         print("context_kl", self.rlmodel.current_context_kl)
