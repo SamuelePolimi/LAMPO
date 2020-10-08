@@ -1,5 +1,9 @@
 # LAMPO
 
+<p float="middle">
+  <a href="https://www.youtube.com/watch?v=LKtnzc4TV98"> <img src="img/cartpole.gif" width="400" hspace="10"> </a>
+</p>
+
 ## Motivation
 
 Current state-of-the-art robot-learning algorithm, divide the learning in two phases: a first imitation-learning from demonstration and a subsequent reinforcement learning policy improvement. 
