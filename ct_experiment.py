@@ -60,7 +60,13 @@ def get_arguments_dict():
                         help="Number of the evaluation batch.",
                         type=int,
                         default=500)
-
+    parser.add_argument("--not_dr",
+                        help="Don't do dimensionality reduction.",
+                        action="store_true")
+    parser.add_argument("--forgetting_rate",
+                        help="The forgetting rate of the IRWR-GMM.",
+                        type=float,
+                        default=1.)
 
     args = parser.parse_args()
     return args
@@ -97,8 +103,8 @@ if __name__ == "__main__":
     parameters = process_parameters(parameters, args.imitation_learning, state_dim, args.il_noise)
 
     imitation = CT_ImitationLearning(state_dim, parameters.shape[1] - config[args.task_name]["latent_dim"],
-                                     config[args.task_name]["latent_dim"], n_clusters)
-    imitation.fit(parameters[:, :state_dim], parameters[:, state_dim:])
+                                     config[args.task_name]["latent_dim"], n_clusters, use_dr=not args.not_dr)
+    imitation.fit(parameters[:, :state_dim], parameters[:, state_dim:], forgetting_rate=args.forgetting_rate)
 
     n_evaluation_samples = args.n_evaluations
     n_batch = args.batch_size

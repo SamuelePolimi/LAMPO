@@ -71,6 +71,13 @@ def get_arguments_dict():
     parser.add_argument("--id_start",
                         help="How many runs would you like to perform.",
                         type=int, default=-1)
+    parser.add_argument("--not_dr",
+                        help="Don't do dimensionality reduction.",
+                        action="store_true")
+    parser.add_argument("--forgetting_rate",
+                        help="The forgetting rate of the IRWR-GMM.",
+                        type=float,
+                        default=1.)
 
 
     args = parser.parse_args()
@@ -85,7 +92,7 @@ def work(arg_parse, id):
 
 def experiment_line(arg_parse: dict, id):
     positional = ["folder_name"]
-    booleans = ["plot", "normalize", "forward", "load", "dense_reward", "slurm"]
+    booleans = ["plot", "normalize", "forward", "load", "dense_reward", "slurm", "not_dr"]
     exclude = ["n_runs", "date", "save", "id_start"]
     ret = []
     for p in positional:

@@ -18,7 +18,7 @@ class CT_ImitationLearning:
 
         self._use_dr = use_dr
 
-    def fit(self, context, parameters):
+    def fit(self, context, parameters, forgetting_rate=0.5):
         if self._use_dr:
             self.pca = PCA(self._latent_dims)
             self.pca.fit(parameters)
@@ -28,7 +28,7 @@ class CT_ImitationLearning:
             self._latent = parameters
             new_data = np.concatenate([context, parameters], axis=1)
 
-        self._gmm = IRWRGMM(self._n_clusters)
+        self._gmm = IRWRGMM(self._n_clusters, discount=forgetting_rate)
         self._gmm.fit_new_data(new_data, np.ones(context.shape[0]))
 
     def predict(self, context):

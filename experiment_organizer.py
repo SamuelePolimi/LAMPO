@@ -127,7 +127,7 @@ if __name__ == "__main__":
     pprint.pprint(args_dict)
     print(experiment_line(args_dict, 2))
 
-    if args_dict["id_start"] <= 0:
+    if args_dict["id_start"] < 0:
         if create_folder(experiment_path):
             with open(experiment_path + 'configuration.json', 'w') as fp:
                 json.dump(args_dict, fp, indent=4, sort_keys=True)
