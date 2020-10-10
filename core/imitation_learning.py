@@ -157,7 +157,8 @@ class PPCAImitation:
             latent.append(z)
             cluster.append(k)
             mp = MovementPrimitive(self.space, MovementPrimitive.get_params_from_block(self.space, w[1:]))
-            duration = 1 if w[0] < 0  else w[0]
+            duration = 1 if w[0] < 0 else w[0]
+            print(duration)
             if self._headless:
                 trajectory = mp.get_full_trajectory(duration=duration, frequency=200)
             else:
@@ -168,8 +169,8 @@ class PPCAImitation:
                 joint = a1  # (a2-a1)*20.
                 joint_gripper = joint
                 obs, reward, terminate = self.task.step(joint_gripper)
-                if reward==1. or terminate==1.:
-                    if reward==1.:
+                if reward == 1. or terminate==1.:
+                    if reward == 1.:
                         success = 1.
                     break
             tot_reward, success = self.stop(joint_gripper, success)

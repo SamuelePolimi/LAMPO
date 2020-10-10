@@ -67,7 +67,7 @@ class RLBenchBox(TaskInterface):
         mp = MovementPrimitive(self._space, MovementPrimitive.get_params_from_block(self._space, weights))
         duration = 1 if duration < 0 else duration
         if self._headless:
-            trajectory = mp.get_full_trajectory(duration=duration, frequency=200)
+            trajectory = mp.get_full_trajectory(duration=min(duration, 1), frequency=200)
         else:
             trajectory = mp.get_full_trajectory(duration=5 * duration, frequency=200)
         tot_reward = 0.
