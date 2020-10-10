@@ -533,10 +533,12 @@ class RLModel(DictSerializable):
             w = torch.exp(rho_num - rho_den) / self._k.shape[0]
 
         # todo: let's see how does it works
-        ret = torch.sum(self._r*w) - 1E-4 * self.get_context_kl_tensor()
-        ret = self._get_gradient_from_torch(ret), ret.detach().numpy()
+        if self._kl_reg > 0:
+            ret = torch.sum(self._r*w) - self._kl_reg * self.get_context_kl_tensor()
+        else:
+            ret = torch.sum(self._r*w)
 
-        return ret
+        return self._get_gradient_from_torch(ret), ret.detach().numpy()
 
     def zero_grad(self):
         self._base_diag_Sigma.grad.zero_()

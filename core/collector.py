@@ -31,7 +31,7 @@ class RunModel:
             cluster.append(k)
 
             success, tot_reward = self.task.send_movement(w[1:], w[0])
-            print(tot_reward)
+            print(success, tot_reward)
             success_list.append(success)
 
             if self.dense_reward:

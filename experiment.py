@@ -60,6 +60,10 @@ def get_arguments_dict():
                         help="Bound the improvement kl.",
                         type=float,
                         default=0.2)
+    parser.add_argument("--context_reg",
+                        help="Bound the improvement kl.",
+                        type=float,
+                        default=1E-4)
     parser.add_argument("-f", "--forward",
                         help="Bound the improvement kl.",
                         action="store_true")
@@ -71,7 +75,10 @@ def get_arguments_dict():
                         help="Number of the evaluation batch.",
                         type=int,
                         default=500)
-
+    parser.add_argument("--data_augment",
+                        help="Number of artificially generated data (x times). (=1 means no data augmentation)",
+                        type=int,
+                        default=1)
 
     args = parser.parse_args()
     return args
@@ -83,10 +90,13 @@ class Objectview(object):
         self.__dict__ = d
 
 
-def process_parameters(parameters, n_samples, n_context, noise=0.03):
+def process_parameters(parameters, n_samples, n_context, noise=0.03, augment=1):
     parameters = parameters[:n_samples].copy()
-    parameters[:, :n_context] += noise * np.random.normal(size=parameters[:, :n_context].shape)
-    return parameters
+    data_list = []
+    for i in range(augment):
+        data_list.append(np.copy(parameters))
+        data_list[-1][:, :n_context] += noise * np.random.normal(size=parameters[:, :n_context].shape)
+    return np.concatenate(data_list, axis=0)
 
 
 if __name__ == "__main__":
@@ -104,7 +114,7 @@ if __name__ == "__main__":
 
 
     parameters = task.get_demonstrations()[:args.imitation_learning]
-    parameters = process_parameters(parameters, args.imitation_learning, state_dim, args.il_noise)
+    parameters = process_parameters(parameters, args.imitation_learning, state_dim, args.il_noise, augment=args.data_augment)
 
     mppca = MPPCA(n_clusters, config[args.task_name]["latent_dim"], n_init=500)
     mppca.fit(parameters)
@@ -122,7 +132,7 @@ if __name__ == "__main__":
     normalize = args.normalize
 
     rl_model = RLModel(mppca, context_dim=config[args.task_name]["state_dim"], kl_bound=kl_bound,
-                              kl_bound_context=kl_context_bound, normalize=normalize,
+                              kl_bound_context=kl_context_bound, kl_reg=args.context_reg,  normalize=normalize,
                               kl_type=kl_type)
 
     myplot = LampoMonitor(kl_bound, kl_context_bound=kl_context_bound,
@@ -151,6 +161,10 @@ if __name__ == "__main__":
 
         if args.plot:
             myplot.visualize()
+        if args.save:
+            myplot.save(experiment_path + "result_%d_%d.npz" % (args.id, i))
+            sr.rlmodel.save(experiment_path + "model_%d_%d.npz" % (args.id, i))
+
 
     s, r, actions, latent, cluster, observation = collector.collect_samples(n_evaluation_samples, isomorphic_noise=False)
 

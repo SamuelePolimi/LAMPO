@@ -57,6 +57,10 @@ def get_arguments_dict():
                         help="Bound the improvement kl.",
                         type=float,
                         default=0.2)
+    parser.add_argument("--context_reg",
+                        help="Bound the improvement kl.",
+                        type=float,
+                        default=1E-4)
     parser.add_argument("-f", "--forward",
                         help="Bound the improvement kl.",
                         action="store_true")
@@ -78,7 +82,9 @@ def get_arguments_dict():
     parser.add_argument("--id_start",
                         help="How many runs would you like to perform.",
                         type=int, default=-1)
-
+    parser.add_argument("--data_augment",
+                        help="Augment the data x times (if x=1 data is not augmented)",
+                        type=int, default=1)
 
     args = parser.parse_args()
 

@@ -1,5 +1,5 @@
-from rlbench.tasks import WaterPlants, CloseDrawer
-from core.augmented_tasks.tasks import ReachTarget
+from rlbench.tasks import WaterPlants
+from core.augmented_tasks.tasks import ReachTarget, CloseDrawer
 from core.rl_bench_box import RLBenchBox, Reacher2D
 from core.lab_connection import TCPTask
 
@@ -7,10 +7,10 @@ config = {
     "tcp": {
         "task_box": lambda headless: TCPTask(5056, 20),
         "n_features": 20,
-        "n_cluster": 3,
-        "latent_dim": 3,
+        "n_cluster": 4,
+        "latent_dim": 2,
         "state_dim": 3,
-        "n_samples": 100
+        "n_samples": 50
     },
     "reacher2d_1": {
         "task_box": lambda headless: Reacher2D(20, 1, headless),
@@ -48,7 +48,7 @@ config = {
         "task_class": CloseDrawer,  # TODO: remove
         "task_box": lambda headless: RLBenchBox(CloseDrawer, 94, 20, headless),
         "n_cluster": 10,
-        "latent_dim": 5,
+        "latent_dim": 4,
         "n_features": 20,   # TODO: remove
         "state_dim": 94,    # TODO: remove
         "n_samples": 200
