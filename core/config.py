@@ -12,6 +12,14 @@ config = {
         "state_dim": 3,
         "n_samples": 50
     },
+    "tcp_pouring": {
+        "task_box": lambda headless: TCPTask(5056, 20),
+        "n_features": 20,
+        "n_cluster": 4,
+        "latent_dim": 4,
+        "state_dim": 1,
+        "n_samples": 100
+    },
     "reacher2d_1": {
         "task_box": lambda headless: Reacher2D(20, 1, headless),
         "n_features": 20,
@@ -60,7 +68,7 @@ config = {
         "latent_dim": 10,
         "n_features": 20,  # TODO: remove
         "state_dim": 84,  # TODO: remove
-        "n_samples": 200
+        "n_samples": 1000
     },
     "reach_target": {
         "task_class": ReachTarget,
