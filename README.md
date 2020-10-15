@@ -54,7 +54,7 @@ or `ct_experiment_organizer.py` to run the Colome and Torras algorithm reference
 An example to run an experiment
 
 ```shell script
-experiment_organizer.py folder_name --task_name reach_target --kl 0.2 -c -1 --n_runs 1 -l 200 --save -z --forward  --max_iter 10 --n_evaluations 500 --batch_size 100 --dense_reward 
+experiment_organizer.py folder_name --task_name reach_target --kl 0.2 -c -1 --n_runs 1 --imitation_learning 200 -z --forward  --max_iter 10 --n_evaluations 500 --batch_size 100 --dense_reward 
 ```
 
 We specify few of the options, but full description is enquirable by running `experiment_organizer.py ?`.
@@ -66,6 +66,7 @@ We specify few of the options, but full description is enquirable by running `ex
 - `--n_evaluations` at each iteration, how many evaluations do you want
 - `--batch_size` how many sample should we take from the `n_evaluations` to learn
 - `--imitation_learning` how many demonstration do we want to use
+- `-z` to do importance sampling with normalization (otherwise the default is without)
 
 If you want, provided that the folder mentioned is created, you can launch also single experiments, very similarly
 
