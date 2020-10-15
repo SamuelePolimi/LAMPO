@@ -1,4 +1,4 @@
-from rlbench.tasks import ReachTarget as RT, WaterPlants, CloseDrawer as CD
+from rlbench.tasks import ReachTarget as RT, WaterPlants as WP, CloseDrawer as CD
 from pyrep.backend import sim
 import numpy as np
 from rlbench.backend.task import Task
@@ -43,3 +43,14 @@ class CloseDrawer(CD):
             return 1.
         else:
             return rew/0.12
+
+
+class WaterPlants(WP):
+
+
+    def set_additional_info(self, robot):
+        self._robot = robot
+
+    def get_dense_reward(self):
+        return 0.
+

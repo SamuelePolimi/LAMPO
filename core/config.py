@@ -1,5 +1,4 @@
-from rlbench.tasks import WaterPlants
-from core.augmented_tasks.tasks import ReachTarget, CloseDrawer
+from core.augmented_tasks.tasks import ReachTarget, CloseDrawer, WaterPlants
 from core.rl_bench_box import RLBenchBox, Reacher2D
 from core.lab_connection import TCPTask
 
