@@ -290,7 +290,7 @@ class RLModel(DictSerializable):
         :param isomorphic_noise:
         :return:
         """
-        c = torch.from_numpy(c)
+        c = torch.from_numpy(c).view(1, c.shape[1])
         p = np.exp(self._log_responsabilities(c, self._last_log_pi, self._last_mu, self._last_Sigma).detach().numpy()).T
         k = [np.random.choice(range(self._n_cluster),
                              p=p_i) for p_i in p]

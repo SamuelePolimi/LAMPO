@@ -46,7 +46,10 @@ class CT_ReinforcementLearning:
         self._reps = EpisodicREPS(kl_bound)
 
     def add_dataset(self, context, movement, reward):
-        latent = self._imitation.pca.transform(movement)
+        if self._imitation._use_dr:
+            latent = self._imitation.pca.transform(movement)
+        else:
+            latent = movement
         data = np.concatenate([context, latent], axis=1)
         w = self._reps.optimize(reward)
         self._imitation._gmm.fit_new_data(data, w)

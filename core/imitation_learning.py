@@ -224,6 +224,7 @@ class RunModel:
             self.task.reset()
             context = self.task.read_context()
             observations.append(context)
+            print("RECEIVED CONTESXT", np.expand_dims(context, 0))
             w, z, k = self._rl_model.generate_full(np.expand_dims(context, 0), noise=noise, isomorphic_noise=isomorphic_noise)
 
             parameters.append(w)
@@ -231,7 +232,7 @@ class RunModel:
             cluster.append(k)
 
             success, tot_reward = self.task.send_movement(w[1:], w[0])
-            print(success, tot_reward)
+            print(success, tot_reward, k, z)
             success_list.append(success)
 
             if self.dense_reward:
