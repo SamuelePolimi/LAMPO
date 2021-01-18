@@ -32,6 +32,12 @@ def get_arguments_dict():
     parser.add_argument("-n", "--n_runs",
                         help="How many runs would you like to perform.",
                         type=int, default=10)
+    parser.add_argument("-d", "--dense",
+                        help="Dense reward.",
+                        action="store_true")
+    parser.add_argument("-s", "--timesteps",
+                        help="Number of Timesteps.",
+                        type=int, default=500000)
     parser.add_argument("-r", "--slurm",
                         help="Don't look for CPU usage.",
                         action="store_true")
@@ -51,7 +57,7 @@ def work(arg_parse, id):
 
 def experiment_line(arg_parse: dict, id):
     positional = ["folder_name"]
-    booleans = ["slurm"]
+    booleans = ["slurm", "dense"]
     exclude = ["n_runs", "id_start", "date"]
     ret = []
     for p in positional:
@@ -92,7 +98,7 @@ if __name__ == "__main__":
 
                 if not args_dict["slurm"]:
 
-                    tp = ThreadPool(5)
+                    tp = ThreadPool(1)
                     for idx in range(args_dict["n_runs"]):
                         tp.apply_async(work, (args_dict, idx))
 
