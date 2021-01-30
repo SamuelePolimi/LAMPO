@@ -47,7 +47,6 @@ class CloseDrawer(CD):
 
 class WaterPlants(WP):
 
-
     def set_additional_info(self, robot):
         self._robot = robot
 

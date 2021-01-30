@@ -165,7 +165,6 @@ if __name__ == "__main__":
             myplot.save(experiment_path + "result_%d_%d.npz" % (args.id, i))
             sr.rlmodel.save(experiment_path + "model_%d_%d.npz" % (args.id, i))
 
-
     s, r, actions, latent, cluster, observation = collector.collect_samples(n_evaluation_samples, isomorphic_noise=False)
 
     print("ITERATION", args.max_iter)

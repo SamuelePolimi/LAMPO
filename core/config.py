@@ -1,5 +1,5 @@
 from core.augmented_tasks.tasks import ReachTarget, CloseDrawer, WaterPlants
-from core.rl_bench_box import RLBenchBox, Reacher2D
+from core.rl_bench_box import RLBenchBox, Reacher2D, ObstacleReacher2d
 from core.lab_connection import TCPTask
 
 config = {
@@ -50,6 +50,22 @@ config = {
         "latent_dim": 2,
         "state_dim": 2,
         "n_samples": 100
+    },
+    # "reacher2d_obstacle": {
+    #     "task_box": lambda headless: ObstacleReacher2d(20, headless),
+    #     "n_features": 20,
+    #     "n_cluster": 25,
+    #     "latent_dim": 5,
+    #     "state_dim": 2,
+    #     "n_samples": 9000
+    # },
+    "reacher2d_obstacle": {
+        "task_box": lambda headless: ObstacleReacher2d(20, headless),
+        "n_features": 20,
+        "n_cluster": 40,
+        "latent_dim": 5,
+        "state_dim": 2,
+        "n_samples": 16500
     },
     "close_drawer": {
         "task_class": CloseDrawer,  # TODO: remove

@@ -47,10 +47,10 @@ class RLModel(DictSerializable):
     load_fn = DictSerializable.get_numpy_load()
 
     torch_vars = ["log_base_pi", "mu", "_base_diag_Sigma"]
-    lists = ["_rho_den", "_parameter_list"]
+    lists = ["_rho_den", "_parameter_list", "_history_log_pi", "_history_Sigma", "_history_mu"]
 
     # kl_reg was 0.01
-    def __init__(self, mppca: MPPCA, context_dim, normalize=True, kl_type="forward", kl_bound=0.5, kl_bound_context=1., kl_reg=0.01):
+    def __init__(self, mppca: MPPCA, context_dim, normalize=True, kl_type="forward", kl_bound=0.5, kl_bound_context=1., kl_reg=0.01, mixture_history=True):
 
         torch.set_default_tensor_type('torch.DoubleTensor')
 
@@ -67,6 +67,13 @@ class RLModel(DictSerializable):
             self._first_log_pi = self.get_log_pi(self.log_base_pi).detach().clone()
             self._first_Sigma = self.get_Sigma(self._base_diag_Sigma).detach().clone()
             self._first_mu = self.mu.detach().clone()
+
+            self._history_log_pi = [self._first_log_pi]
+            self._history_Sigma = [self._first_Sigma]
+            self._history_mu = [self._first_mu]
+
+
+            self._mixture_history = mixture_history
 
             # list of parameters
             self._parameter_list = [self.log_base_pi, self.mu, self._base_diag_Sigma]
@@ -178,6 +185,10 @@ class RLModel(DictSerializable):
         self._last_Sigma = self.get_Sigma(self._base_diag_Sigma).detach().clone()
         self._last_mu = self.mu.detach().clone()
 
+        self._history_log_pi.append(self._last_log_pi)
+        self._history_Sigma.append(self._last_Sigma)
+        self._history_mu.append(self._last_mu)
+
     def add_dataset(self, w, z, k, c, r):
         k = k.astype(np.long)
         w, z, k, c, r = map(torch.from_numpy, [w, z, k, c, r])
@@ -188,10 +199,16 @@ class RLModel(DictSerializable):
         self._c_data = torch.cat([self._c_data, c], 0)
         self._r = torch.cat([self._r, r], 0)
 
-        with torch.no_grad():
-            # TODO should already be detached
-            self._rho_den.append(self._log_policy(z, k, c,
-                                    self._last_log_pi, self._last_mu, self._last_Sigma).detach())
+        if not self._mixture_history:
+            with torch.no_grad():
+                # TODO should already be detached
+                self._rho_den.append(self._log_policy(z, k, c,
+                                                      self._last_log_pi, self._last_mu, self._last_Sigma).detach())
+        else:
+            with torch.no_grad():
+                res = torch.stack([self._log_policy(self._z, self._k, self._c_data, _log_pi, _mu, _Sigma).detach().clone()
+                        for _log_pi, _mu, _Sigma in zip(self._history_log_pi, self._history_mu, self._history_Sigma)])
+                self._rho_den = sum_logs(res, axis=0, mul=1./len(self._history_log_pi))
 
     def preprocess(self):
         self._Omega = self.W[:, self._context_dim:, :]
@@ -525,7 +542,11 @@ class RLModel(DictSerializable):
                                  self.get_log_pi(self.log_base_pi), self.mu, self.get_Sigma(self._base_diag_Sigma))
 
         rho_num = log_p
-        rho_den = torch.cat(self._rho_den)
+
+        if self._mixture_history:
+            rho_den = self._rho_den
+        else:
+            rho_den = torch.cat(self._rho_den)
 
         if self._normalize:
             w = torch.exp(rho_num - rho_den - sum_logs(rho_num - rho_den))

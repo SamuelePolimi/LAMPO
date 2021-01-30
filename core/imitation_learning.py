@@ -224,7 +224,7 @@ class RunModel:
             self.task.reset()
             context = self.task.read_context()
             observations.append(context)
-            print("RECEIVED CONTESXT", np.expand_dims(context, 0))
+            print("RECEIVED CONTEXT", np.expand_dims(context, 0))
             w, z, k = self._rl_model.generate_full(np.expand_dims(context, 0), noise=noise, isomorphic_noise=isomorphic_noise)
 
             parameters.append(w)

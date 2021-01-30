@@ -4,7 +4,6 @@ Version of reinforce that includes
 1. normalized importance sampling for data reuse
 2. Reversed KL regularization in closed form
 
-(DARE? Data Efficient Reinforce)
 """
 
 from core.model import RLModel

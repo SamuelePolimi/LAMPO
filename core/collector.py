@@ -39,7 +39,6 @@ class RunModel:
             else:
                 reward_list.append(success)
 
-
         print("-"*50)
         print("Total reward", np.mean(reward_list))
         print("-"*50)
