@@ -2,7 +2,7 @@ from gym import Env
 import numpy as np
 from herl.dict_serializable import DictSerializable
 
-from core.augmented_tasks.tasks import ReachTarget
+from core.augmented_tasks.tasks import ReachTarget, CloseDrawer
 
 
 class StatsBox(Env, DictSerializable):
@@ -10,17 +10,18 @@ class StatsBox(Env, DictSerializable):
     load_fn = DictSerializable.get_numpy_load()
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, env, max_length=np.inf, dense_reward=True, save_fr=10, save_dest="state_box"):
+    def __init__(self, env, max_length=np.inf, dense_reward=True, save_fr=10, save_dest="state_box", render=False):
         Env.__init__(self)
         DictSerializable.__init__(self, DictSerializable.get_numpy_save())
         self.eval_env = env
         # Define action and observation space
         # They must be gym.spaces objects
         # Example when using discrete actions:
-        self.action_space = self.eval_env.action_space
+        if env is not None:
+            self.action_space = self.eval_env.action_space
+            # Example for using image as input:
+            self.observation_space = self.eval_env.observation_space
         self._dense_reward = dense_reward
-        # Example for using image as input:
-        self.observation_space = self.eval_env.observation_space
         self.partial_reward = 0.
         self.partial_length = 0
         self.returns = []
@@ -28,8 +29,10 @@ class StatsBox(Env, DictSerializable):
         self.successes = []
         self._unused = True
         self._max_length = max_length
+        self.max_episode_steps = max_length
         self._save_fr = save_fr
         self._save_dest = save_dest
+        self._render = render
 
     @staticmethod
     def load_from_dict(**kwargs):
@@ -83,7 +86,13 @@ class StatsBox(Env, DictSerializable):
             else:
                 self.successes.append(0)
             if self._dense_reward:
-                r = ReachTarget.get_dense_reward(self.eval_env.task._task)
+                if self.eval_env.spec._env_name=="reach_target-state":
+                    r = ReachTarget.get_dense_reward(self.eval_env.task._task)
+                elif self.eval_env.spec._env_name=="close_drawer-state":
+                    r = CloseDrawer.get_dense_reward(self.eval_env.task._task)
+                else:
+                    raise Exception("No dense reward for the selected task.")
+
             self.partial_reward += r
             self.returns.append(self.partial_reward)
             self.episode_lengths.append(self.partial_length)
@@ -94,11 +103,14 @@ class StatsBox(Env, DictSerializable):
             self._unused = True
         else:
             r = 0.
+        if self._render:
+            self.render()
         return s, r, d, i
 
     def reset(self):
-        if len(self.returns) % self._save_fr == 0:
-            DictSerializable.save(self, self._save_dest)
+        if self._save_fr is not None:
+            if len(self.returns) % self._save_fr == 0:
+                DictSerializable.save(self, self._save_dest)
 
         if not self._unused:
             if self.partial_reward == 1:

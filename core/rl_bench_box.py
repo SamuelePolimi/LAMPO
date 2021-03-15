@@ -215,8 +215,10 @@ class ObstacleRectangle:
     def __init__(self, x, y, dx, dy):
         self.x1 = x
         self.x2 = x + dx
+        self.dx = dx
         self.y1 = y
         self.y2 = y + dy
+        self.dy = dy
         self._patch = patches.Rectangle((x, y), dx, dy,
                                         linewidth=1, edgecolor='r', facecolor='r')
 
@@ -233,6 +235,8 @@ class ObstacleRectangle:
         return False
 
     def draw(self, ax):
+        self._patch = patches.Rectangle((self.x1, self.y1), self.dx, self.dy,
+                                        linewidth=1, edgecolor='r', facecolor='r')
         ax.add_patch(self._patch)
 
 
@@ -351,10 +355,16 @@ class ObstacleReacher2d(TaskInterface):
         x = self._kinematics.get_forward(configuration[0], configuration[1])
         return np.sqrt(np.sum((x - self._context)**2)) < 0.4
 
-    def draw(self, configuration, ax):
+    def draw(self, configuration, ax, alpha=1.0):
         x1, x2 = self._kinematics.get_full_forward(configuration[0], configuration[1])
-        ax.plot([0, x1[0]], [0, x1[1]], c='gray')
-        ax.plot([x2[0], x1[0]], [x2[1], x1[1]], c='gray')
+        ax.plot([0, x1[0]], [0, x1[1]], c='gray', alpha=alpha)
+        ax.scatter(x1[0], x1[1], color='gray', alpha=alpha, s=2)
+        ax.plot([x2[0], x1[0]], [x2[1], x1[1]], c='gray', alpha=alpha)
+        ax.scatter(x2[0], x2[1], color='gray', alpha=alpha, s=2)
+
+    def draw_goal(self, ax):
+        circle = patches.Circle(self._context, 0.1, edgecolor='green', facecolor='white')
+        ax.add_patch(circle)
 
     def _point(self, d, theta):
         return d*np.array([np.cos(theta), np.sin(theta)])
@@ -449,14 +459,20 @@ class ObstacleReacher2d(TaskInterface):
     def get_success_demo(self):
         demos = self.get_demonstrations()
         ret = []
+        rew = []
         for i, demo in enumerate(demos):
             self._context = demo[:2]
             traj = LoadTrajectory("trajectories/trajectory_%d.npy" % i)
             traj_val = traj.get_dict_values()
             conf = np.array([traj_val["j0"][-1], traj_val["j1"][-1]])
+            # for v0, v1 in zip(vals["j0"], vals["j1"]):
+            #     if self.check_collision(np.array([v0, v1])):
+            #         return False, -1.
+
+            rew.append(-self._kinematics.get_loss(traj_val["j0"][-1], traj_val["j1"][-1], self._context))
             ret.append(self.close_to_goal(conf))
 
-        return np.sum(ret)/len(ret)
+        return np.sum(ret)/len(ret), np.sum(rew)/len(rew)
 
     def send_movement(self, weights, duration):
         mp = MovementPrimitive(self._space, MovementPrimitive.get_params_from_block(self._space, weights))
